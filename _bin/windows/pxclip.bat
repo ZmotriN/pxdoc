@@ -1,0 +1,1 @@
+@php "%~dp0..\scripts\pxclip.php" %1

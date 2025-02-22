@@ -1,0 +1,1 @@
+@php "%~dp0..\scripts\pxtune.php" %1

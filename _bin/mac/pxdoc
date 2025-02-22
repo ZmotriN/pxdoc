@@ -1,1 +1,1 @@
-php "${0%/*}/../scripts/pxpros.php" $1
+php "${0%/*}/../scripts/pxdoc.php" $1

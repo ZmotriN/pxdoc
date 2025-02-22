@@ -1,0 +1,1 @@
+php "${0%/*}/../scripts/pxtune.php" $1
