@@ -1,0 +1,30 @@
+.color {
+    display: inline-block;
+    position: relative;
+    width: 7.8em;
+    height: 1.9em;
+    line-height: 1.9em;
+    border-radius: 1.9em;
+    margin-right: 0.6em;
+    margin-bottom: 1.5em;
+    transition-duration: 100ms;    
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0px 0px 5px var(--color-black-alpha7);
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: 0.9em;
+    
+    &.spacer {
+        margin-left: 25px;
+    }
+    
+    &:hover {
+        transform: scale(1.08);
+    }
+}
+
+body.dark .color {
+    box-shadow: 0px 0px 5px var(--color-white-alpha7);
+}

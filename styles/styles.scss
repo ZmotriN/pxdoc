@@ -1,0 +1,31 @@
+
+@use 'partials/config';
+
+// @use 'partials/functions';
+@use 'partials/fonts';
+@use 'partials/intlink';
+@use 'partials/modal';
+@use 'partials/password';
+@use 'partials/darkmode';
+
+@use 'components/grostitre';
+@use 'components/dots';
+@use 'components/infobubble';
+@use 'components/tune';
+@use 'components/mediafile';
+@use 'components/codepen';
+@use 'components/doclink';
+@use 'components/exercice';
+@use 'components/tool';
+@use 'components/clip';
+@use 'components/highlight';
+@use 'components/checklist';
+@use 'components/knowmore';
+@use 'components/colors';
+@use 'components/swiper';
+@use 'components/quote';
+@use 'components/oembed';
+@use 'components/correction';
+
+@use 'partials/main';
+

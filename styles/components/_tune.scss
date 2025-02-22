@@ -1,0 +1,68 @@
+.tune {
+    position: relative;
+    display: flex;
+    width: calc(100% + 50px);
+    aspect-ratio: 77/10;
+    margin-bottom: 25px;
+    margin-left: -25px;
+    margin-right: -25px;
+    background-color: var(--color-code-light);
+    user-select: none;
+
+    &__button {
+        height: 100%;
+        aspect-ratio: 1/1;
+        background-image: var(--icon-tune-play-black);
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-size: 90% 90%;
+        opacity: 0.6;
+        cursor: pointer;
+        border-radius: 50%;
+
+        &.pause {
+            background-image: var(--icon-tune-pause-black);
+        }
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    &__waveform {
+        position: relative;
+        height: 100%;
+        width: 100%;
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+        background-position: center;
+        opacity: 80%;
+    }
+
+    &__progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0%;
+        background-color: var(--main-color);
+        mix-blend-mode: multiply;
+        opacity: 20%;
+        transition-property: width;
+        transition-duration: 50ms;
+        transition-timing-function: linear;
+    }
+
+}
+
+body.dark {
+    .tune {
+        background-color: var(--color-code-dark);
+        &__button {
+            background-image: var(--icon-tune-play-white);
+            &.pause {
+                background-image: var(--icon-tune-pause-white);
+            }
+        }
+    }
+}

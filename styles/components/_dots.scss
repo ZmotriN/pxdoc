@@ -1,0 +1,10 @@
+.dots {
+    width: 60px;
+    color: var(--main-color);
+    margin-left: auto;
+    margin-right: auto;
+
+    @media (min-width: 576px)  {
+        width: 100px;
+    }
+}

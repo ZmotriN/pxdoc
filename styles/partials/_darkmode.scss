@@ -1,0 +1,46 @@
+:root:has(body.dark) {
+    color-scheme: dark;
+}
+
+body.dark {
+    color: var(--color-white);
+    background-color: var(--color-black);
+
+    a { color: var(--color-white); }
+    hr { border: 1px dashed var(--main-color-dark); }
+    span.inline-code { color: var(--color-white); background-color: var(--color-code-dark) }
+
+    #lightswitch {
+        background-color: var(--main-color-dark);
+        border: 4px solid var(--main-color-dark);
+        &::before {
+            background-color: var(--color-white);
+            transform: translateX(0%) rotate(-45deg);
+            clip-path: var(--path-moon);
+            -webkit-clip-path: var(--path-moon);
+        }
+    }
+   
+    // #logo, .breadcrum-logo { filter: hue-rotate(3.142rad) brightness(100%) drop-shadow(0 0 min(10px, 0.76vw) var(--color-white-alpha5)); }
+
+
+    main::before { background: linear-gradient(to bottom, var(--main-color-light-alpha8), 20%, var(--color-black)); }
+
+    #wiki__list { background-image: linear-gradient(to right, var(--main-color-light-alpha9), #000000); }
+    
+
+
+
+    span.codepen-remark {
+        margin-top: -25px;
+    }
+
+
+    table{
+        tr:nth-child(even) td{
+            background-color: var(--color-white-alpha9);
+        }
+        
+    }
+
+}

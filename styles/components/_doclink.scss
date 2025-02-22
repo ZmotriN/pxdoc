@@ -1,0 +1,223 @@
+a.doclink {
+    display: inline-block;
+    position: relative;
+    background-image: none;
+    margin-bottom: 1.5em;
+    margin-right: 0.6em;
+    border-radius: 1.4em;
+    white-space: nowrap;
+    max-width: calc(100vw - 60px);
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.4;
+        background-color: var(--main-color);
+        border-radius: 1.4em;
+        transition-duration: 100ms;
+    }
+
+    &:hover {
+        color: var(--color-white);
+        &::before {
+            opacity: 1;
+        }
+    }
+
+    .doclink-title {
+        display: inline-block;
+        position: relative;
+        vertical-align: middle;
+        margin-left: 0.6em;
+        margin-right: 0.6em;
+        line-height: 2em;
+        // font-family: var(--font-monospace);
+        width: calc(100% - 2.6em);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 0.9em;
+    }
+
+    .doclink-icon {
+        background-image: url(../images/icons/doclink-icon.webp);
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        display: inline-block;
+        position: relative;
+        vertical-align: middle;
+        left: 0.2em;
+        width: 1.4em;
+        height: 1.4em;
+        border-radius: 50%;
+    }
+}
+
+.doclink.spacer {
+    margin-left: 25px;
+}
+
+.doclink.css3 {
+    .doclink-icon { background-image: url('../images/icons/css3-icon.webp'); }
+    &::before { background-color: #004ce8; }
+}
+
+.doclink.w3schools {
+    .doclink-icon { background-image: url('../images/icons/w3schools-icon.webp'); }
+    &::before { background-color: #009a68; }
+}
+
+.doclink.mozilla {
+    .doclink-icon { background-image: url('../images/icons/mozilla-icon.webp'); }
+    &::before { background-color: #ff1a00; }
+}
+
+.doclink.csstricks {
+    .doclink-icon { background-image: url('../images/icons/csstricks-icon.webp'); }
+    &::before { background-color: #36acb4; }
+}
+
+.doclink.codepen {
+    .doclink-icon { background-image: url('../images/icons/codepen-icon.webp'); }
+    &::before { background-color: #000000; }
+}
+
+.doclink.zipfile {
+    .doclink-icon { background-image: url('../images/icons/zip-icon.webp'); }
+    &::before { background-color: #242526; }
+}
+
+.doclink.pdffile {
+    .doclink-icon { background-image: url('../images/icons/pdf-icon.webp'); }
+    &::before { background-color: var(--main-color); }
+}
+
+.doclink.bootstrap {
+    .doclink-icon { background-image: url('../images/icons/bootstrap-icon.webp'); }
+    &::before { background-color: #b343ff; }
+}
+
+.doclink.google {
+    .doclink-icon { background-image: url('../images/icons/google-icon.webp'); }
+    &::before { background-color: #1a73e8; }
+}
+
+.doclink.googlefonts {
+    .doclink-icon { background-image: url('../images/icons/googlefonts-icon.webp'); }
+    &::before { background-color: #1a73e8; }
+}
+
+.doclink.wikipedia {
+    .doclink-icon { background-image: url('../images/icons/wikipedia-icon.webp'); }
+    &::before { background-color: #6a7077; }
+}
+
+.doclink.ogp {
+    .doclink-icon { background-image: url('../images/icons/ogp-icon.webp'); }
+    &::before { background-color: #6a7077; }
+}
+
+.doclink.facebook {
+    .doclink-icon { background-image: url('../images/icons/facebook-icon.webp'); }
+    &::before { background-color: #146ed4; }
+}
+
+.doclink.greensock {
+    .doclink-icon { background-image: url('../images/icons/gsap-icon.webp'); }
+    &::before { background-color: #56cc00; }
+}
+
+.doclink.smnarnold {
+    .doclink-icon { background-image: url('../images/icons/smnarnold-icon.webp'); }
+    &::before { background-color: #7cfef0; }
+}
+
+.doclink.trello {
+    .doclink-icon { background-image: url('../images/icons/trello-icon.webp'); }
+    &::before { background-color: #bfd8ff; }
+}
+
+.doclink.sass {
+    .doclink-icon { background-image: url('../images/icons/sass-icon.webp'); }
+    &::before { background-color: #cf649a; }
+}
+
+.doclink.vuforia {
+    .doclink-icon { background-image: url('../images/icons/vuforia-icon.webp'); }
+    &::before { background-color: #6ebf4b; }
+}
+
+.doclink.momo {
+    .doclink-icon { background-image: url('../images/icons/momo-icon.webp'); }
+    &::before { background-color: #c1d72e; }
+}
+
+.doclink.github {
+    .doclink-icon { background-image: url('../images/icons/github-icon.webp'); }
+    &::before { background-color: #48494c; }
+}
+
+.doclink.youtube {
+    .doclink-icon { background-image: url('../images/icons/youtube-icon.webp'); }
+    &::before { background-color: #ff0000; }
+}
+
+.doclink.unity {
+    .doclink-icon { background-image: url('../images/icons/unity-icon.webp'); }
+    &::before { background-color: #6a7077; }
+}
+
+.doclink.vuejs {
+    .doclink-icon { background-image: url('../images/icons/vuejs-icon.webp'); }
+    &::before { background-color: #41b883; }
+}
+
+.doclink.wordpress {
+    .doclink-icon { background-image: url('../images/icons/wordpress-icon.webp'); }
+    &::before { background-color: #21759b; }
+}
+
+.doclink.npm {
+    .doclink-icon { background-image: url('../images/icons/npm-icon.webp'); }
+    &::before { background-color: #c93737; }
+}
+
+.doclink.vimeo {
+    .doclink-icon { background-image: url('../images/icons/vimeo-icon.webp'); }
+    &::before { background-color: #1ab7ea; }
+}
+
+.doclink.webdev {
+    .doclink-icon { background-image: url('../images/icons/webdev-icon.webp'); }
+    &::before { background-color: #0166ff; }
+}
+
+.doclink.swiper {
+    .doclink-icon { background-image: url('../images/icons/swiper-icon.webp'); }
+    &::before { background-color: #0080ff; }
+}
+
+.doclink.medium {
+    .doclink-icon { background-image: url('../images/icons/medium-icon.webp'); }
+    &::before { background-color: #ffc017; }
+}
+
+.doclink.pinterest {
+    .doclink-icon { background-image: url('../images/icons/pinterest-icon.webp'); }
+    &::before { background-color: #bd081c; }
+}
+
+
+body.dark {
+    .doclink.zipfile::before {
+        background-color: #627b94;
+    }
+    .doclink.codepen::before {
+        background-color: #5b5e6b;
+    }
+}
