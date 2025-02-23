@@ -797,9 +797,9 @@ app.component('codepen', {
         getColors() {
             const rootstyles = getComputedStyle(document.documentElement);
             return {
-                main_color: rootstyles.getPropertyValue('--main-color'),
-                main_color_dark: rootstyles.getPropertyValue('--main-color-dark'),
-                main_color_light: rootstyles.getPropertyValue('--main-color-light'),
+                main_color: rootstyles.getPropertyValue('--main-color').trim().toLocaleLowerCase(),
+                main_color_dark: rootstyles.getPropertyValue('--main-color-dark').trim().toLocaleLowerCase(),
+                main_color_light: rootstyles.getPropertyValue('--main-color-light').trim().toLocaleLowerCase(),
             }
         },
     },
@@ -958,35 +958,23 @@ app.component('color', {
  *                  Composante Clip                   *
  ******************************************************/
 app.component('clip', {
-    props: ['src', 'title'],
+    props: ['src', 'title', 'aspect'],
+    setup(props) {
+        props.aspect || (props.aspect = '16/9');
+        props.title || (props.title = '');
+    },
     data() {
         let url = new URL(this.src, document.baseURI);
         let name = url.pathname.split('.').shift();
-        let id = name.split('/').pop();
-        let details = syncjson(name + '.json');
-        let track = undefined;
-        let title = this.title ?? '';
-        details.media.track.forEach(elm => { if (elm['@type'] == 'Video') { track = elm; } });
-        if (track == undefined) return {};
-        else {
-            let denominator = hcd(track.Width, track.Height);
-            let aspect = (track.Width / denominator) + '/' + (track.Height / denominator);
-            return {
-                id: id,
-                name: name,
-                title: title,
-                width: track.Width,
-                height: track.Height,
-                aspect: aspect,
-                thumbnail_url: name + '.jpg',
-                playbtn: 'block',
-                player: ''
-            }
+        return {
+            thumbnail_url: name + '.jpg',
+            playbtn: 'block',
+            player: ''
         }
     },
     methods: {
         play() {
-            this.player = '<video id="' + this.id + '" width="100%" height="100%" autoplay="true" poster="' + this.thumbnail_url + '" data-setup=\'{"fluid": true}\' controls preload="auto"><source src="' + this.src + '" type="video/mp4" /></video>';
+            this.player = '<video width="100%" height="100%" autoplay="true" poster="' + this.thumbnail_url + '" data-setup=\'{"fluid": true}\' controls preload="auto"><source src="' + this.src + '" type="video/mp4" /></video>';
             this.playbtn = 'none';
         }
     },
@@ -1316,9 +1304,11 @@ app.component('checklist', {
         sound.addEventListener('play', () => { this.play(); });
         sound.addEventListener('pause', () => { this.pause(); });
         sound.addEventListener('ended', () => { this.ended(); });
-        this.$root.registerLightSwitch(this);
+        let color = getComputedStyle(document.documentElement).getPropertyValue('--main-color').trim().substring(1, 7).toLocaleLowerCase() + 'ff';
+
         return {
             name: name,
+            color: color,
             sound: sound,
             playInt: null
         }
@@ -1351,17 +1341,11 @@ app.component('checklist', {
             let progress = Math.round(this.sound.currentTime / this.sound.duration * 10000) / 100;
             this.$refs.progress.style.width = progress + '%';
         },
-        lightSwitchOff() {
-            this.$refs.waveform.style.backgroundImage = 'url('+this.name + '-dark.png)';
-        },
-        lightSwitchOn() {
-            this.$refs.waveform.style.backgroundImage = 'url('+this.name + '-light.png)';
-        }
     },
     template:
         `<div class="tune">` +
             `<div class="tune__button" ref="button" @click="this.click()"></div>` +
-            `<div class="tune__waveform" ref="waveform" :style="'background-image: url(\\''+this.name+'-'+this.$root.theme+'.png\\')'" @click="this.seek">` +
+            `<div class="tune__waveform" ref="waveform" :style="'background-image: url(\\''+this.name+'-'+this.color+'-'+this.$root.theme+'.png\\')'" @click="this.seek">` +
                 `<div class="tune__progress" ref="progress"></div>` +
             `</div>` +
         `</div>`

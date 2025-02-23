@@ -38,3 +38,34 @@ function err($str)
     echo 'Error: ' . $str . RN;
     exit(1);
 }
+
+
+function find_colors()
+{
+    static $colors = null;
+
+    if($colors === null) {
+        if(!$root = find_root(__FILE__)) return false;
+        if(!$config = json_decode(file_get_contents($root))) return false;
+        if(!$cssfiles[0] = realpath(pathinfo($root, PATHINFO_DIRNAME) . '/pxdoc/styles/styles.min.css')) return false;
+
+        if(!empty($config->styles)) {
+            if(is_string($config->styles)) $config->styles = [$config->styles];
+            foreach($config->styles as $cssfile) {
+                if(!$cssfile = realpath(pathinfo($root, PATHINFO_DIRNAME) . S . $cssfile)) continue;
+                else $cssfiles[] = $cssfile;
+            }
+        }
+
+        $colors = new stdClass;
+        foreach($cssfiles as $cssfile) {
+            if(!$css = @file_get_contents($cssfile)) continue;
+            if(preg_match("/--main-color:[^#]*#([0-9a-f]{6})/i", $css, $m)) $colors->main = strtolower($m[1]) . 'ff';
+            if(preg_match("/--second-color:[^#]*#([0-9a-f]{6})/i", $css, $m)) $colors->second = strtolower($m[1]) . 'ff';
+            if(preg_match("/--color-black:[^#]*#([0-9a-f]{6})/i", $css, $m)) $colors->black = strtolower($m[1]) . 'ff';
+            if(preg_match("/--color-white:[^#]*#([0-9a-f]{6})/i", $css, $m)) $colors->white = strtolower($m[1]) . 'ff';
+        }
+    }
+
+    return $colors;
+}

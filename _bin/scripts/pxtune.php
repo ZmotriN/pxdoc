@@ -9,28 +9,7 @@ if(!extension_loaded('gd')) err("GD PHP Extension required.");
 if(!where('audiowaveform')) err("AudioWaveForm not found.");
 if(!where('mediainfo')) err("MediaInfo not found.");
 
-if(!$root = find_root(__FILE__)) err("Can't find project root.");
-if(!$config = json_decode(file_get_contents($root))) err("Config file wrong format.");
-if(!$cssfiles[0] = realpath(__DIR__ . '/../../styles/styles.min.css')) err("Can't find main stylesheet.");
-
-if(!empty($config->styles)) {
-    if(is_string($config->styles)) $config->styles = [$config->styles];
-    foreach($config->styles as $cssfile) {
-        if(!$cssfile = realpath(pathinfo($root, PATHINFO_DIRNAME) . S . $cssfile)) continue;
-        else $cssfiles[] = $cssfile;
-    }
-}
-
-foreach($cssfiles as $cssfile) {
-    if(!$css = @file_get_contents($cssfile)) continue;
-    if(preg_match("/--main-color:[^#]*#([0-9a-f]{6})/i", $css, $m)) $maincolor = strtolower($m[1]) . 'ff';
-    if(preg_match("/--color-black:[^#]*#([0-9a-f]{6})/i", $css, $m)) $colorblack = strtolower($m[1]) . 'ff';
-    if(preg_match("/--color-white:[^#]*#([0-9a-f]{6})/i", $css, $m)) $colorwhite = strtolower($m[1]) . 'ff';
-}
-
-if(!isset($maincolor)) err("Can't find main color.");
-if(!isset($colorblack)) err("Can't find black color.");
-if(!isset($colorwhite)) err("Can't find white color.");
+if(!$colors = find_colors()) err("Can't find colors.");
 
 if(empty($argv[1])) err("No input file specified.");
 if(!$file = realpath($argv[1])) err("Invalid input file specified.");
@@ -53,11 +32,11 @@ foreach($data->media->track as $track) {
 if(!isset($samplingCount)) err("No audio track found.");
 
 $zoom = round($samplingCount / WIDTH, 5);
-$pngdark = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '-dark.png', $file);
-$pnglight = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '-light.png', $file);
+$pngdark = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '-' . $colors->main . '-dark.png', $file);
+$pnglight = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '-' . $colors->main . '-light.png', $file);
 
-shell_exec('audiowaveform -i ' . escapeshellarg($file) . ' -o ' . $pngdark . ' --quiet --amplitude-scale ' . AMPLITUDE . ' --border-color ' . $colorwhite . ' --axis-label-color ' . $colorwhite . ' --background-color 00000000 --waveform-color ' . $maincolor . ' --width ' . WIDTH . ' --height ' . HEIGHT . ' --zoom ' . $zoom);
-shell_exec('audiowaveform -i ' . escapeshellarg($file) . ' -o ' . $pnglight . ' --quiet --amplitude-scale ' . AMPLITUDE . ' --border-color ' . $colorblack . ' --axis-label-color ' . $colorblack . ' --background-color ffffff00 --waveform-color ' . $maincolor . ' --width ' . WIDTH . ' --height ' . HEIGHT . ' --zoom ' . $zoom);
+shell_exec('audiowaveform -i ' . escapeshellarg($file) . ' -o ' . $pngdark . ' --quiet --amplitude-scale ' . AMPLITUDE . ' --border-color ' . $colors->white . ' --axis-label-color ' . $colors->white . ' --background-color 00000000 --waveform-color ' . $colors->main . ' --width ' . WIDTH . ' --height ' . HEIGHT . ' --zoom ' . $zoom);
+shell_exec('audiowaveform -i ' . escapeshellarg($file) . ' -o ' . $pnglight . ' --quiet --amplitude-scale ' . AMPLITUDE . ' --border-color ' . $colors->black . ' --axis-label-color ' . $colors->black . ' --background-color ffffff00 --waveform-color ' . $colors->main . ' --width ' . WIDTH . ' --height ' . HEIGHT . ' --zoom ' . $zoom);
 
 foreach([$pngdark, $pnglight] as $png) {
     if(!is_file($png)) err("Can't extract waveform.");
