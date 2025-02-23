@@ -34,12 +34,8 @@ $color_white_hex: unquote('#{str-slice(ie-hex-str($color_white), 4)}');
 
 
 :root {
-    
-    --subhead-height: 200px;
-    --footer-height: 100px;
-    --article-padding: 40px;
-    --h1-size-desktop: 48px;
-    --grostitre-size-desktop: 36px;
+    --footer-height: 7em;
+    --article-padding: 2.5em;
     
     --logo: url(../images/logo.svg);
     --font: "Rubik", sans-serif;

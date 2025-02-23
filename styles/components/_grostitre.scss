@@ -18,10 +18,10 @@
         margin-top: 0 !important;
         margin-bottom: 0 !important;
 
-        @media (min-width: 576px) {
-            font-size: var(--grostitre-size-desktop) !important;
-        }
-    }
+        // @media (min-width: 576px) {
+        //     font-size: var(--grostitre-size-desktop) !important;
+        // }
+    }   
 
     &__linkcopied {
         line-height: 7vw;

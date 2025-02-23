@@ -272,6 +272,19 @@ function register_tag($tag, $clb) {
 
 
 /**
+ * register_hook
+ *
+ * @param  mixed $name
+ * @param  mixed $clb
+ * @return void
+ */
+function register_hook($name, $clb) {
+    global $PAGE;
+    return $PAGE->registerHook($name, $clb);
+}
+
+
+/**
  * Parse the first DOCKBLOCK of a file and return attributes as an object
  *
  * @param  mixed $file PHP File to be parse

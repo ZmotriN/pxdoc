@@ -165,6 +165,7 @@ function print_children($parent=null, $return=false) {
                                 <span class="list-grid__item__abstract">{$child->abstract}</span>
                             </div>
                         </div>
+
 EOD;
     }
     if($return) return $str;
