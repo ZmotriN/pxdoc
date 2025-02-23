@@ -9,8 +9,17 @@ if(!extension_loaded('gd')) err("GD PHP Extension required.");
 if(!where('audiowaveform')) err("AudioWaveForm not found.");
 if(!where('mediainfo')) err("MediaInfo not found.");
 
+if(!$root = find_root(__FILE__)) err("Can't find project root.");
+if(!$config = json_decode(file_get_contents($root))) err("Config file wrong format.");
 if(!$cssfiles[0] = realpath(__DIR__ . '/../../styles/styles.min.css')) err("Can't find main stylesheet.");
-// echo find_root(__FILE__).RN; // FIND IN OTHER STYLESHEETS
+
+if(!empty($config->styles)) {
+    if(is_string($config->styles)) $config->styles = [$config->styles];
+    foreach($config->styles as $cssfile) {
+        if(!$cssfile = realpath(pathinfo($root, PATHINFO_DIRNAME) . S . $cssfile)) continue;
+        else $cssfiles[] = $cssfile;
+    }
+}
 
 foreach($cssfiles as $cssfile) {
     if(!$css = @file_get_contents($cssfile)) continue;

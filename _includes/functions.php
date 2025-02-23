@@ -43,8 +43,8 @@ function print_breadcrumb() {
         if(!$data = php_file_info($file)) break;
         if($root != $parent) $link = str_replace([$root, '\\'], ['', '/'], $parent)."/";
         else {
-            $link = getRelativePath($PAGE->file, $PAGE->root);
-            if(!empty($data->icon)) $icon = getRelativePath($PAGE->file, realpath($parent.S.$data->icon));
+            $link = get_relative_path($PAGE->file, $PAGE->root);
+            if(!empty($data->icon)) $icon = get_relative_path($PAGE->file, realpath($parent.S.$data->icon));
         }
         $page = str_replace([$root, '\\'], ['', '/'], pathinfo($PAGE->file, PATHINFO_DIRNAME));
         $backwards = count(explode('/',str_replace($link, '', $page)));
@@ -70,7 +70,7 @@ function print_breadcrumb_index() {
     foreach(explode('/', $ref) as $part) {
         $index .= $part.'/';
         if(!$data = php_file_info($index.'_index.php')) continue;
-        $url = getRelativePath($PAGE->file, $index);
+        $url = get_relative_path($PAGE->file, $index);
         echo '<a href="' . $url . '">' . $data->title . '</a>&nbsp;>&nbsp;';
     }
 }
@@ -83,7 +83,7 @@ function print_breadcrumb_index() {
  */
 function getProjectRoot() {
     global $PAGE;
-    $path = getRelativePath($PAGE->file, $PAGE->root);
+    $path = get_relative_path($PAGE->file, $PAGE->root);
     if(!$path) $path = './';
     return $path;
 }
@@ -98,7 +98,7 @@ function getIndexPath() {
     global $PAGE;
     if(!$PAGE->ref) return;
     $index = $PAGE->root.'index/';
-    return getRelativePath($PAGE->file, $index);
+    return get_relative_path($PAGE->file, $index);
 }
 
 
@@ -229,13 +229,13 @@ function getIndexReferences($name=null) {
 
 
 /**
- * getRelativePath
+ * get_relative_path
  *
  * @param  mixed $from
  * @param  mixed $to
  * @return void
  */
-function getRelativePath($from, $to) {
+function get_relative_path($from, $to) {
     $from = is_dir($from) ? rtrim($from, '\/') . '/' : $from;
     $to   = is_dir($to)   ? rtrim($to, '\/') . '/'   : $to;
     $from = str_replace('\\', '/', $from);

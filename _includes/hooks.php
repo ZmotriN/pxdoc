@@ -112,7 +112,7 @@ register_tag('intlink', function($html, $attrs, $data) {
     $url = !empty($info->url) ? $info->url : $path;
     $url = rtrim($url, '/').'/'.(isset($anchor) ? '#'.$anchor : '');
     $thumb = rtrim($path, '/').'/'.$info->icon;
-    $thumb = getRelativePath($this->file, realpath(pathinfo($this->file, PATHINFO_DIRNAME).'/'.$thumb));
+    $thumb = get_relative_path($this->file, realpath(pathinfo($this->file, PATHINFO_DIRNAME).'/'.$thumb));
     return <<<EOD
         <div class="intlink__item">
             <div class="intlink__item__icon" style="background-image: url({$thumb});"></div>
@@ -136,7 +136,7 @@ register_tag('listlink', function($html, $attrs, $data) {
     if(!$info = php_file_info($file)) return;
     $url = !empty($info->url) ? $info->url : $attrs['href'];
     $thumb = rtrim($path, '/').'/'.$info->icon;
-    $thumb = getRelativePath($this->file, realpath(pathinfo($this->file, PATHINFO_DIRNAME).'/'.$thumb));
+    $thumb = get_relative_path($this->file, realpath(pathinfo($this->file, PATHINFO_DIRNAME).'/'.$thumb));
     return <<<EOD
         <div class="list-grid__item">
             <div class="list-grid__item__icon" style="background-image: url({$thumb});"></div>
@@ -186,8 +186,8 @@ register_tag('references', function($html, $attrs, $data) {
     $ref = strtolower(trim(str_replace('\\', '/', $ref), '/'));
     $str = '';
     foreach(getIndexReferences($ref) as $info) {
-        $url = getRelativePath($this->file, pathinfo($info->file, PATHINFO_DIRNAME));
-        $thumb = getRelativePath(pathinfo($this->file, PATHINFO_DIRNAME), realpath(pathinfo($this->file, PATHINFO_DIRNAME).'/'.$url.$info->icon));
+        $url = get_relative_path($this->file, pathinfo($info->file, PATHINFO_DIRNAME));
+        $thumb = get_relative_path(pathinfo($this->file, PATHINFO_DIRNAME), realpath(pathinfo($this->file, PATHINFO_DIRNAME).'/'.$url.$info->icon));
         $str .= <<<EOD
         <div class="list-grid__item">
             <div class="list-grid__item__icon" style="background-image: url({$thumb});"></div>
