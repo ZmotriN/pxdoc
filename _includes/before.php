@@ -34,3 +34,4 @@ foreach($info['header'] as $header) {
     if(!$headerfile = realpath($header)) continue;
     include($header);
 }
+

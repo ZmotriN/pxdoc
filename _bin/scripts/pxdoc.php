@@ -139,8 +139,10 @@ final class PXPros
         include($file);
         if ($this->after) include(realpath($this->root . $this->after));
         $contents = ob_get_clean();
+        
         $contents = $this->processTags($contents);
         $contents = $this->processHook('post_render', $contents);
+        
         file_put_contents($target, $contents);
     }
 
@@ -234,7 +236,7 @@ final class PXPros
  */
 function replace_tags($tag, $contents, $clb)
 {
-    $contents = preg_replace_callback('#<' . preg_quote($tag, '#') . '(.*?)>(.*?)</' . preg_quote($tag, '#') . '>#msi', function ($m) use ($clb) {
+    $contents = preg_replace_callback('#<' . preg_quote($tag, '#') . '([^>]*)>(.*?)</' . preg_quote($tag, '#') . '>#msi', function ($m) use ($clb) {
         return call_user_func($clb, $m[0], parse_html_attributes($m[1]), $m[2]);
     }, $contents);
     return $contents;

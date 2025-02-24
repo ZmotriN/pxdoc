@@ -223,6 +223,7 @@ register_tag('tune', function($html, $attrs, $data) {
  *                   Composante Clip                  *
  ******************************************************/
 register_tag('clip', function($html, $attrs, $data) {
+
     if(empty($attrs['src'])) return $html;
     if(!$colors = find_colors()) return $html;
     if(!$file = realpath(pathinfo($this->file, PATHINFO_DIRNAME) . S . $attrs['src'])) return $html;
