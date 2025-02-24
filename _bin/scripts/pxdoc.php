@@ -1,5 +1,4 @@
 <?php
-
 /**
  * MIT License
  * 
@@ -30,11 +29,11 @@
  */
 
 
+require_once(__DIR__ . '/utils.php');
+
 /**
  * Declare constants & globals
  */
-const S  = "/";
-const RN = "\n";
 $PAGE = null;
 
 date_default_timezone_set('America/Toronto');
@@ -139,10 +138,8 @@ final class PXPros
         include($file);
         if ($this->after) include(realpath($this->root . $this->after));
         $contents = ob_get_clean();
-        
         $contents = $this->processTags($contents);
         $contents = $this->processHook('post_render', $contents);
-        
         file_put_contents($target, $contents);
     }
 
@@ -227,40 +224,6 @@ final class PXPros
 
 
 /**
- * replace_tags
- *
- * @param  mixed $tag
- * @param  mixed $contents
- * @param  mixed $clb
- * @return void
- */
-function replace_tags($tag, $contents, $clb)
-{
-    $contents = preg_replace_callback('#<' . preg_quote($tag, '#') . '([^>]*)>(.*?)</' . preg_quote($tag, '#') . '>#msi', function ($m) use ($clb) {
-        return call_user_func($clb, $m[0], parse_html_attributes($m[1]), $m[2]);
-    }, $contents);
-    return $contents;
-}
-
-
-/**
- * parse_html_attributes
- *
- * @param  mixed $attributes
- * @return void
- */
-function parse_html_attributes($attributes)
-{
-    if (preg_match_all('#(\\w+)\s*=\\s*("[^"]*"|\'[^\']*\'|[^"\'\\s>]*)#i', $attributes, $m)) {
-        foreach ($m[1] as $k => $key) {
-            $attrs[strtolower($key)] = stripslashes(substr($m[2][$k], 1, -1));;
-        }
-    }
-    return isset($attrs) ? $attrs : [];
-}
-
-
-/**
  * register_tag
  *
  * @param  mixed $tag
@@ -283,72 +246,6 @@ function register_tag($tag, $clb) {
 function register_hook($name, $clb) {
     global $PAGE;
     return $PAGE->registerHook($name, $clb);
-}
-
-
-/**
- * Parse the first DOCKBLOCK of a file and return attributes as an object
- *
- * @param  mixed $file PHP File to be parse
- * @return void
- */
-function php_file_info($file)
-{
-	static $files = [];
-    if(!$file = realpath($file)) return false;
-	if(!isset($files[$file])){
-		$tokens = token_get_all(file_get_contents($file));
-		foreach($tokens as $tok) {
-			if(!is_array($tok)) continue;
-			if($tok[0] == T_DOC_COMMENT) {
-				$block = $tok[1];
-				break;
-			}
-		}
-		if(empty($block)) return new stdClass;
-		if(!preg_match_all('#@([a-z0-9]+)[\s\t]+([^\n]+)#msi', $block, $m)) $files[$file] = new stdClass;
-		else {
-			foreach($m[1] as $k => $v) $info[trim($v)] = trim($m[2][$k]);
-			$files[$file] = (object)$info;
-		}
-	}
-	return $files[$file];
-}
-
-
-/**
- * Recursevly walk a folder and yield files corresponding to the pattern
- *
- * @param  mixed $path Path and pattern to walk through
- * @return void
- */
-function dig($path)
-{
-    $patt = pathinfo($path, PATHINFO_BASENAME);
-    $path = pathinfo($path, PATHINFO_DIRNAME);
-    if (!$path = realpath($path)) return;
-    else $path .= S;
-    $dirs    = [];
-    foreach (glob($path . $patt) as $file) {
-        if (is_dir($file)) continue;
-        else yield $file;
-    }
-    foreach (glob($path . '*', GLOB_ONLYDIR) as $dir) {
-        foreach (call_user_func(__FUNCTION__, $dir . S . $patt) as $file) yield $file;
-    }
-}
-
-
-/**
- * Display error message and Quit
- *
- * @param  mixed $str Error message
- * @return void
- */
-function err($str)
-{
-    echo 'Error: ' . $str . RN;
-    exit(1);
 }
 
 

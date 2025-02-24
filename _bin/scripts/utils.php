@@ -1,7 +1,9 @@
 <?php
 
+const BR = '<br>';
 const RN = "\r\n";
 const S = '/';
+
 
 function where($file)
 {
@@ -69,3 +71,136 @@ function find_colors()
 
     return $colors;
 }
+
+
+function gcd($a, $b=0) {
+	return is_array($a) ? array_reduce($a, 'gcd') : ($b ? gcd($b, $a % $b) : $a);
+}
+
+
+function gcd_reduce($a,$b){
+	$f = gcd($a,$b);
+	return [$a/$f,$b/$f];
+}
+
+
+
+/**
+ * get_relative_path
+ *
+ * @param  mixed $from
+ * @param  mixed $to
+ * @return void
+ */
+function get_relative_path($from, $to) {
+    $from = is_dir($from) ? rtrim($from, '\/') . '/' : $from;
+    $to   = is_dir($to)   ? rtrim($to, '\/') . '/'   : $to;
+    $from = str_replace('\\', '/', $from);
+    $to   = str_replace('\\', '/', $to);
+    $from     = explode('/', $from);
+    $to       = explode('/', $to);
+    $relPath  = $to;
+
+    foreach($from as $depth => $dir) {
+        if($dir === $to[$depth]) {
+            array_shift($relPath);
+        } else {
+            $remaining = count($from) - $depth;
+            if($remaining > 1) {
+                $padLength = (count($relPath) + $remaining - 1) * -1;
+                $relPath = array_pad($relPath, $padLength, '..');
+                break;
+            } else {
+                $relPath[0] = './' . $relPath[0];
+            }
+        }
+    }
+    return implode('/', $relPath);
+}
+
+
+/**
+ * replace_tags
+ *
+ * @param  mixed $tag
+ * @param  mixed $contents
+ * @param  mixed $clb
+ * @return void
+ */
+function replace_tags($tag, $contents, $clb)
+{
+    $contents = preg_replace_callback('#<' . preg_quote($tag, '#') . '([^>]*)>(.*?)</' . preg_quote($tag, '#') . '>#msi', function ($m) use ($clb) {
+        return call_user_func($clb, $m[0], parse_html_attributes($m[1]), $m[2]);
+    }, $contents);
+    return $contents;
+}
+
+
+/**
+ * parse_html_attributes
+ *
+ * @param  mixed $attributes
+ * @return void
+ */
+function parse_html_attributes($attributes)
+{
+    if (preg_match_all('#(\\w+)\s*=\\s*("[^"]*"|\'[^\']*\'|[^"\'\\s>]*)#i', $attributes, $m)) {
+        foreach ($m[1] as $k => $key) {
+            $attrs[strtolower($key)] = stripslashes(substr($m[2][$k], 1, -1));;
+        }
+    }
+    return isset($attrs) ? $attrs : [];
+}
+
+
+/**
+ * Parse the first DOCKBLOCK of a file and return attributes as an object
+ *
+ * @param  mixed $file PHP File to be parse
+ * @return void
+ */
+function php_file_info($file)
+{
+	static $files = [];
+    if(!$file = realpath($file)) return false;
+	if(!isset($files[$file])){
+		$tokens = token_get_all(file_get_contents($file));
+		foreach($tokens as $tok) {
+			if(!is_array($tok)) continue;
+			if($tok[0] == T_DOC_COMMENT) {
+				$block = $tok[1];
+				break;
+			}
+		}
+		if(empty($block)) return new stdClass;
+		if(!preg_match_all('#@([a-z0-9]+)[\s\t]+([^\n]+)#msi', $block, $m)) $files[$file] = new stdClass;
+		else {
+			foreach($m[1] as $k => $v) $info[trim($v)] = trim($m[2][$k]);
+			$files[$file] = (object)$info;
+		}
+	}
+	return $files[$file];
+}
+
+
+/**
+ * Recursevly walk a folder and yield files corresponding to the pattern
+ *
+ * @param  mixed $path Path and pattern to walk through
+ * @return void
+ */
+function dig($path)
+{
+    $patt = pathinfo($path, PATHINFO_BASENAME);
+    $path = pathinfo($path, PATHINFO_DIRNAME);
+    if (!$path = realpath($path)) return;
+    else $path .= S;
+    foreach (glob($path . $patt) as $file) {
+        if (is_dir($file)) continue;
+        else yield $file;
+    }
+    foreach (glob($path . '*', GLOB_ONLYDIR) as $dir) {
+        foreach (call_user_func(__FUNCTION__, $dir . S . $patt) as $file) yield $file;
+    }
+}
+
