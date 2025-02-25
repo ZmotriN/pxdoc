@@ -30,6 +30,18 @@ foreach($pstyles as $cssfile) {
     $styles[] = get_relative_path($PAGE->file, $cssfile);
 }
 
+$scripts[] = $PAGE->shared . 'jscripts/highlight.min.js';
+$scripts[] = $PAGE->shared . 'jscripts/swiper-bundle.min.js';
+$scripts[] = $PAGE->shared . 'jscripts/vue.global.prod.js';
+$scripts[] = $PAGE->shared . 'jscripts/pxdoc.min.js';
+$pscripts = $PAGE->scripts;
+if(empty($pscripts)) $pscripts = [];
+if(is_string($pscripts)) $pscripts = [$pscripts];
+foreach($pscripts as $scriptfile) {
+    if(!$scriptfile = realpath($root . $scriptfile)) continue;
+    $scripts[] = get_relative_path($PAGE->file, $scriptfile);
+}
+
 foreach($info['header'] as $header) {
     if(!$headerfile = realpath($header)) continue;
     include($header);

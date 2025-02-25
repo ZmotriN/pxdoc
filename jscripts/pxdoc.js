@@ -1739,11 +1739,22 @@ app.component('timg', {
 });
 
 
-
 /******************************************************
  *                Composante Imglegend                *
  ******************************************************/
  app.component('imglegend', {
     props: ['src'],
     template: `<img :src="this.src" style="margin-bottom: 10px"><small style="opacity: 0.5;"><slot></small><br/><br/>`
+});
+
+
+/******************************************************
+ *                  Composante Error                  *
+ ******************************************************/
+ app.component('error', {
+    props: ['title',],
+    setup(props) {
+        props.title || (props.title = 'Erreur');
+    },
+    template: `<div class="error"><div class="error__text"><h4>{{ title }}</h4><slot/></div></div>`
 });

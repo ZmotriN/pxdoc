@@ -44,7 +44,8 @@ a.doclink {
     }
 
     .doclink-icon {
-        background-image: url(../images/icons/doclink-icon.webp);
+        // background-image: url(../images/icons/doclink-icon.webp);
+        background-image: var(--icon-doc);
         background-size: contain;
         background-position: center;
         background-repeat: no-repeat;

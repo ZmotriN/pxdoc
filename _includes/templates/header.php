@@ -25,11 +25,8 @@
         <link rel="icon" type="image/x-icon" href="<?php echo $PAGE->shared; ?>images/favicon.ico">
         <?php foreach($styles as $cssfile): ?><link rel="stylesheet" href="<?php echo $cssfile; ?>">
         <?php endforeach;?><script>const shared = '<?php echo $PAGE->shared; ?>';</script>
-        <script src="<?php echo $PAGE->shared; ?>jscripts/highlight.min.js"></script>
-        <script src="<?php echo $PAGE->shared; ?>jscripts/swiper-bundle.min.js"></script>
-        <script src="<?php echo $PAGE->shared; ?>jscripts/vue.global.prod.js"></script>
-        <script src="<?php echo $PAGE->shared; ?>jscripts/pxdoc.min.js"></script>
-        <title><?php echo strip_tags($PAGE->title); ?></title>
+        <?php foreach($scripts as $scriptfile): ?><script src="<?php echo $scriptfile; ?>"></script>
+        <?php endforeach;?><title><?php echo strip_tags($PAGE->title); ?></title>
     </head>
     <body>
         <script>document.body.classList.add(localStorage.getItem('darkmode') === 'true' ? 'dark' : 'light');</script>

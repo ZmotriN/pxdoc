@@ -254,6 +254,6 @@ register_tag('clip', function($html, $attrs, $data) {
         $attrs['title'] = html_entity_decode(trim($attrs['title']), ENT_QUOTES, 'UTF-8');
         $attrs['title'] = htmlentities($attrs['title'], ENT_QUOTES, 'UTF-8');
     }
-    foreach($attrs as $k => $v) $props[] = $k.'="'.$v.'"';
-    return '<clip'.(!empty($props) ? ' '.join(' ', $props): '').'></clip>';
+    foreach($attrs as $k => $v) $props[] = $k . '="' . $v . '"';
+    return '<clip' . (!empty($props) ? ' ' . join(' ', $props): '') . '></clip>';
 });

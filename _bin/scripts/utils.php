@@ -8,15 +8,18 @@ const S = '/';
 function where($file)
 {
     static $isWin = null;
+    static $execs = [];
+
     if($isWin === null) $isWin = strtoupper(substr(PHP_OS, 0, 3)) == 'WIN' ? true : false;
-    
     if($isWin && strtolower(pathinfo($file, PATHINFO_EXTENSION)) != 'exe') $file = pathinfo($file, PATHINFO_FILENAME) . '.exe';
+    if(isset($execs[$file])) return $execs[$file];
+
     if($isWin) $results = shell_exec('where ' . $file . ' 2>&1');
     else $results = shell_exec('which ' . $file);
-    
     if(!$exec = trim(current(explode("\n", trim($results))))) return false;
     if(!$exec = realpath($exec)) return false;
 
+    $execs[$file] = $exec;
     return $exec;
 }
 
@@ -204,3 +207,13 @@ function dig($path)
     }
 }
 
+
+
+
+spl_autoload_register(function($class) {
+    static $catalog = [
+        'Cache' => 'cache.class.php',
+        'Media' => 'media.class.php',
+    ];
+    if (isset($catalog[$class])) require_once(__DIR__ . '/libraries/' . $catalog[$class]);
+}, true, true);
