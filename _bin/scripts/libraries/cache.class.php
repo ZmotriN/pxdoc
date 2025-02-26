@@ -4,7 +4,7 @@ class Cache
 {
     const DB_TIMEOUT = 10000;
 
-    
+
     private static function db()
     {
         static $db = null;
@@ -31,7 +31,7 @@ class Cache
         if(!$query) $query = self::db()->prepare("INSERT OR REPLACE INTO data(key, val) VALUES(?, ?);");
         $query->bindValue(1, $key, SQLITE3_TEXT);
         $query->bindValue(2, serialize($val),  SQLITE3_TEXT);
-        if (!self::db()->busyTimeout(static::DB_TIMEOUT)) return false;
+        if(!self::db()->busyTimeout(static::DB_TIMEOUT)) return false;
         return @$query->execute() ? true : false;
     }
 

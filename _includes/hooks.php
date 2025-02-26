@@ -206,15 +206,15 @@ EOD;
  *                   Composante Tune                  *
  ******************************************************/
 register_tag('tune', function($html, $attrs, $data) {
-    if(empty($attrs['src'])) return $html;
-    if(!$colors = find_colors()) return $html;
-    if(!$file = realpath(pathinfo($this->file, PATHINFO_DIRNAME) . S . $attrs['src'])) return $html;
-    $pngdark = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '-' . $colors->main . '-dark.png', $file);
-    $pnglight = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '-' . $colors->main . '-light.png', $file);
-    if(!is_file($pngdark) || !is_file($pnglight)) {
-        if(!$script = realpath(__DIR__ . '/../_bin/scripts/pxtune.php')) return $html;
-        shell_exec('php ' . escapeshellarg($script) . ' ' . escapeshellarg($file));
+    if(empty($attrs['src'])) return errcomp("Missing SRC attribute.", "Tune Component Error");;
+    if(!$file = realpath(pathinfo($this->file, PATHINFO_DIRNAME) . S . $attrs['src'])) return errcomp("File not found.", "Tune Component Error");
+
+    try {
+        if(!Media::genWaveForm($file)) return errcomp("Invalid audio file.", "Tune Component Error");
+    } catch(Exception $e) {
+        return errcomp($e->getMessage(), "Tune Component Error");;
     }
+
     return $html;
 });
 
@@ -223,23 +223,17 @@ register_tag('tune', function($html, $attrs, $data) {
  *                   Composante Clip                  *
  ******************************************************/
 register_tag('clip', function($html, $attrs, $data) {
-
-    if(empty($attrs['src'])) return $html;
-    if(!$colors = find_colors()) return $html;
-    if(!$file = realpath(pathinfo($this->file, PATHINFO_DIRNAME) . S . $attrs['src'])) return $html;
+    if(empty($attrs['src'])) return errcomp("Missing SRC attribute.", "Clip Component Error");
+    if(!$file = realpath(pathinfo($this->file, PATHINFO_DIRNAME) . S . $attrs['src'])) return errcomp("File not found.", "Clip Component Error");
     
-    $jsonfile = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '.json', $file);
-    $jpegfile = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '.jpg', $file);
-
-    if(!is_file($jsonfile) || !is_file($jpegfile)) {
-        if(!$script = realpath(__DIR__ . '/../_bin/scripts/pxclip.php')) return $html;
-        shell_exec('php ' . escapeshellarg($script) . ' ' . escapeshellarg($file));
+    try {
+        if(!$data = Media::extractClipInfo($file)) return errcomp("Invalid video file.", "Clip Component Error");
+    } catch(Exception $e) {
+        return errcomp($e->getMessage(), "Clip Component Error");;
     }
-    
-    if(!is_file($jsonfile)) return $html;
-    if(!$data = json_decode(file_get_contents($jsonfile))) return $html;
-    if(empty($data->media)) err("Invalid video file.");
-    if(empty($data->media->track)) err("Invalid video file.");
+
+    if(empty($data->media)) return errcomp("Invalid video file.", "Clip Component Error");
+    if(empty($data->media->track)) return errcomp("Invalid video file.", "Clip Component Error");
     
     foreach($data->media->track as $track) {
         if($track->{'@type'} == 'Video') {
@@ -248,12 +242,65 @@ register_tag('clip', function($html, $attrs, $data) {
         }
     }
 
-    if(!isset($aspect)) return $html;
+    if(!isset($aspect)) return errcomp("Invalid video file.", "Clip Component Error");
     $attrs['aspect'] = join('/', $aspect);
-    if(!empty($attrs['title'])) {
-        $attrs['title'] = html_entity_decode(trim($attrs['title']), ENT_QUOTES, 'UTF-8');
-        $attrs['title'] = htmlentities($attrs['title'], ENT_QUOTES, 'UTF-8');
+    foreach($attrs as $k => $v) $props[] = $k . '="' . htmlentities(html_entity_decode(trim($v), ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8') . '"';
+    return '<clip' . (!empty($props) ? ' ' . join(' ', $props) : '') . '></clip>';
+});
+
+
+/******************************************************
+ *                Composante Boxlink                  *
+ ******************************************************/
+register_tag('boxlink', function($html, $attrs, $data) {
+    if(empty($attrs['href'])) return errcomp("Missing HREF attribute.", "Boxlink Component Error");
+
+    if(is_url($attrs['href'])) {
+
+        if(strpos($attrs['href'], '#') !== false) list($attrs['href'], $anchor) = explode('#', $attrs['href']);
+
+        try {
+            if(!$metas = Scraper::get($attrs['href'])) throw new Exception("Can't scrape meta informations.");
+            if(empty($metas->image)) throw new Exception("No thumbnail image found.");
+
+
+            $url = $metas->url . (isset($anchor) ? '#'.$anchor : '');
+            $title = $metas->title;
+            $abstract = $metas->description;
+            $label = isset($attrs['label']) ? $attrs['label'] : (empty($metas->label) ? 'Lien' : $metas->label);
+            $thumb = $metas->image;
+            $target = '_blank';
+            $classes = ' extern';
+        } catch(Exception $e) {
+            return errcomp($e->getMessage(), "Boxlink Component Error");
+        }
+    } else {
+        $path = $attrs['href'];
+        if(strpos($path, '#') !== false) list($path, $anchor) = explode('#', $path);
+        if(!$file = realpath(pathinfo($this->file, PATHINFO_DIRNAME) . S . $path)) return errcomp("Invalid HREF attribute.", "Boxlink Component Error");
+        if(is_dir($file) && !is_file(($file = realpath($file . S . '_index.php')))) return errcomp("Invalid HREF attribute.", "Boxlink Component Error");
+        if(!$info = php_file_info($file)) return errcomp("Invalid file header: " . $file . ".", "Boxlink Component Error");
+        $url = !empty($info->url) ? $info->url : $path;
+        $url = rtrim($url, '/').'/'.(isset($anchor) ? '#'.$anchor : '');
+        $thumb = rtrim($path, '/') . '/' . (!empty($info->image) ? $info->image : $info->icon);
+        $target = !empty($info->url) ? '_blank' : '_self';
+        $title = $info->title;
+        $abstract = $info->abstract;
+        $label = !empty($info->label) ? $info->label : 'Lien';
+        $classes = '';
     }
-    foreach($attrs as $k => $v) $props[] = $k . '="' . $v . '"';
-    return '<clip' . (!empty($props) ? ' ' . join(' ', $props): '') . '></clip>';
+
+
+    return <<<EOD
+        <a class="boxlink" target="{$target}" href="{$url}">
+            <div class="boxlink-container{$classes}">
+                <div class="boxlink-thumb" style="background-image: url({$thumb})"></div>
+                <div class="boxlink-abstract">
+                    <em class="boxlink-label">{$label}</em>
+                    <span class="boxlink-title">{$title}</span>
+                    <span class="boxlink-description">{$abstract}</span>
+                </div>
+            </div>
+        </a>
+EOD;
 });

@@ -240,3 +240,15 @@ function register_page_type($type = null, $info = null) {
     $types[$type] = $info;
     return true;
 }
+
+
+
+
+function errcomp($message, $title = null) {
+    if(!$title) $title = 'Error';
+    $title = html_entity_decode(trim($title), ENT_QUOTES, 'UTF-8');
+    $title = htmlentities($title, ENT_QUOTES, 'UTF-8');
+    return '<error title="' . $title . '">' . $message . '</error>';
+}
+
+

@@ -7,17 +7,15 @@ class Media
     {
         if(!$file = realpath($file)) throw new Exception("Invalid input file specified.");
         if(is_dir($file)) throw new Exception("Invalid input file specified.");
-        if(!$colors = find_colors()) err("Can't find colors.");
+        if(!$colors = find_colors()) throw new Exception("Can't find colors.");
         $pngdark = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '-' . $colors->main . '-dark.png', $file);
         $pnglight = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '-' . $colors->main . '-light.png', $file);
         if(!$force && is_file($pngdark) && is_file($pnglight)) return true;
 
         if(!extension_loaded('gd')) throw new Exception("GD PHP Extension required.");
         if(!where('audiowaveform')) throw new Exception("AudioWaveForm not found.");
-        if(!where('mediainfo')) throw new Exception("MediaInfo not found.");
-
-        if(!$json = trim(shell_exec('mediainfo ' . escapeshellarg($file) . ' --output=JSON'))) throw new Exception("Can't extract file info.");;
-        if(!$data = json_decode($json)) throw new Exception("Invalid media file.");
+        
+        if(!$data = self::getMediaInfo($file)) throw new Exception("Invalid media file.");
         if(empty($data->media)) throw new Exception("Invalid audio file.");
         if(empty($data->media->track)) throw new Exception("Invalid audio file.");
         
@@ -28,7 +26,7 @@ class Media
                 break;
             }
         }
-        if(!isset($samplingCount)) err("No audio track found.");
+        if(!isset($samplingCount)) throw new Exception("No audio track found.");
         $zoom = round($samplingCount / $width, 5);
 
         shell_exec('audiowaveform -i ' . escapeshellarg($file) . ' -o ' . $pngdark . ' --quiet --amplitude-scale ' . $amplitude . ' --border-color ' . $colors->white . ' --axis-label-color ' . $colors->white . ' --background-color 00000000 --waveform-color ' . $colors->main . ' --width ' . $width . ' --height ' . $height . ' --zoom ' . $zoom);
@@ -54,8 +52,52 @@ class Media
 
     public static function extractClipInfo($file, $force = false)
     {
+        if(!$file = realpath($file)) throw new Exception("Invalid input file specified.");
+        if(is_dir($file)) throw new Exception("Invalid input file specified.");
 
+        $destjpeg = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '.jpg', $file);
+        $destjson = preg_replace('#\.' . pathinfo($file, PATHINFO_EXTENSION) . '$#i', '.json', $file);
+
+        if(!$force && is_file($destjpeg) && is_file($destjson)) return json_decode(file_get_contents($destjson));
+
+        if(!where('ffmpeg')) throw new Exception("FFMPEG not found.");
+
+        if(!$data = self::getMediaInfo($file)) throw new Exception("Invalid media file.");
+        if(empty($data->media)) throw new Exception("Invalid video file.");
+        if(empty($data->media->track)) throw new Exception("Invalid video file.");
+        
+        foreach($data->media->track as $track) {
+            if($track->{'@type'} == 'Video') {
+                $videofound = true;
+                break;
+            }
+        }
+        if(empty($videofound)) throw new Exception("No video track found on media.");
+        file_put_contents($destjson, json_encode($data, JSON_PRETTY_PRINT));
+
+        shell_exec('ffmpeg -hide_banner -loglevel quiet -ss 1 -y -i ' . escapeshellarg($file) . ' -an -vframes 1 ' . escapeshellarg($destjpeg));
+        if(!is_file($destjpeg)) throw new Exception("Can't extract still frame.");
+
+        return $data;
     }
+
+
+    public static function getMediaInfo($file)
+    {
+        if(!$file = realpath($file)) throw new Exception("Invalid input file specified.");
+        if(is_dir($file)) throw new Exception("Invalid input file specified.");
+
+        $key = 'mediainfo_' . shorthash(filemtime($file) . $file);
+        if($info = Cache::get($key)) return $info;
+
+        if(!where('mediainfo')) throw new Exception("MediaInfo not found.");
+        if(!$json = trim(shell_exec('mediainfo ' . escapeshellarg($file) . ' --output=JSON'))) throw new Exception("Can't extract file info.");;
+        if(!$data = json_decode($json)) throw new Exception("Invalid media file.");
+
+        Cache::set($key, $data);
+        return $data;
+    }
+
 
 
 }
