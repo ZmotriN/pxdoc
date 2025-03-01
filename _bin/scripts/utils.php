@@ -5,6 +5,12 @@ const RN = "\r\n";
 const S = '/';
 
 
+define('IMAGICK_SUPPORT', extension_loaded('imagick'));
+define('GD_SUPPORT', extension_loaded('gd'));
+define('WEBP_SUPPORT', IMAGICK_SUPPORT || function_exists('imagewebp'));
+define('IMG_EXT', WEBP_SUPPORT ? '.webp' : '.jpg');
+
+
 function where($file)
 {
     static $isWin = null;
@@ -235,9 +241,8 @@ function curl_get_contents($file, $dest = null, $clb = null)
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_SSL_VERIFYHOST => false,
         CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_TIMEOUT        => 3600,
-        CURLOPT_CONNECTTIMEOUT => 60,
-        CURLOPT_USERAGENT      => ini_get('user_agent'),
+        CURLOPT_TIMEOUT        => 60,
+        CURLOPT_CONNECTTIMEOUT => 10,
         CURLOPT_USERAGENT      => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
         CURLOPT_ENCODING       => 'gzip,deflate',
         CURLOPT_NOPROGRESS     => ($clb ? false : true),
@@ -265,6 +270,7 @@ function curl_get_contents($file, $dest = null, $clb = null)
     }
     $results = curl_exec($chnd);
     $info = curl_getinfo($chnd);
+    // print_r($info);
     curl_close($chnd);
     if (!empty($fhnd)) fclose($fhnd);
     if (!in_array($info['http_code'], [200, 201])) $result = false;
@@ -275,6 +281,80 @@ function curl_get_contents($file, $dest = null, $clb = null)
 function shorthash($str)
 {
     return substr(hash('sha256', $str), 0, 8);
+}
+
+
+function cropimage($img, $w, $h)
+{
+    if(extension_loaded('imagick')) {
+
+    } else {
+        
+    }
+
+
+
+
+
+
+
+
+
+
+
+    $height = ceil(($width = min(imagesx($img), imagesy($img) * $w / $h)) * $h / $w);
+    $width = ceil($width);
+    $offx = round((imagesx($img) - $width) / 2);
+    $offy = round((imagesy($img) - $height) / 2);
+    $tmp = imagecreatetruecolor($w, $h);
+    imagecopyresampled($tmp, $img, 0, 0, $offx, $offy, $w, $h, $width, $height);
+    return $tmp;
+}
+
+
+function html_entities_decode($str) {
+    // $str = html_entity_decode(trim($str), ENT_QUOTES, 'UTF-8');
+    // $str = htmlentities($str, ENT_QUOTES, 'UTF-8');
+    // $str = mb_convert_encoding($str, 'HTML-ENTITIES', 'UTF-8');
+    $str = html_entity_decode(trim($str), ENT_QUOTES, 'UTF-8');
+    // $str = htmlentities($str, ENT_QUOTES, 'UTF-8');
+    return $str;
+}
+
+
+function get_absolute_url(string $baseUrl, string $relativePath): string {
+    // Vérifier si l'URL de base pointe vers un fichier et retirer le fichier du chemin
+
+    if(parse_url($relativePath, PHP_URL_SCHEME)) return $relativePath;
+
+    $baseParts = parse_url($baseUrl);
+    $basePath = $baseParts['path'] ?? '';
+    if (pathinfo($basePath, PATHINFO_EXTENSION)) {
+        $basePath = dirname($basePath);
+    }
+    
+    // S'assurer que le chemin de base a un slash à la fin
+    $basePath = rtrim($basePath, '/') . '/';
+    
+    // Si le chemin relatif commence par '/', l'interpréter comme un chemin absolu sur le domaine
+    if (strpos($relativePath, '/') === 0) {
+        return $baseParts['scheme'] . '://' . $baseParts['host'] . $relativePath;
+    }
+    
+    // Convertir en un chemin absolu en résolvant les '..' et '.'
+    $absoluteParts = explode('/', $basePath . $relativePath);
+    $resolvedParts = [];
+    
+    foreach ($absoluteParts as $part) {
+        if ($part === "..") {
+            array_pop($resolvedParts);
+        } elseif ($part !== "." && $part !== "") {
+            $resolvedParts[] = $part;
+        }
+    }
+    
+    $newPath = implode('/', $resolvedParts);
+    return $baseParts['scheme'] . '://' . $baseParts['host'] . '/' . ltrim($newPath, '/');
 }
 
 

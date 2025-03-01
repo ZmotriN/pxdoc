@@ -99,5 +99,48 @@ class Media
     }
 
 
+    public static function downloadImage($url, $dest, $width, $height)
+    {
+
+        if(!$contents = curl_get_contents($url)) throw new Exception("Can't download thumbnail image.");
+
+        if(IMAGICK_SUPPORT) {
+            $im = new Imagick;
+            $im->readImageBlob($contents);
+
+            $originalWidth = $im->getImageWidth();
+            $originalHeight = $im->getImageHeight();
+            $aspectRatio = $originalWidth / $originalHeight;
+            $targetAspectRatio = $width / $height;
+            
+            if ($aspectRatio > $targetAspectRatio) {
+                $newHeight = $originalHeight;
+                $newWidth = (int)($originalHeight * $targetAspectRatio);
+            } else {
+                $newWidth = $originalWidth;
+                $newHeight = (int)($originalWidth / $targetAspectRatio);
+            }
+            
+            $cropX = (int)(($originalWidth - $newWidth) / 2);
+            $cropY = (int)(($originalHeight - $newHeight) / 2);
+            
+            $im->cropImage($newWidth, $newHeight, $cropX, $cropY);
+            $im->resizeImage($width, $height, Imagick::FILTER_LANCZOS, 1);
+            $im->setImageFormat('webp');
+            $im->setOption('webp:method', '6'); 
+            $im->writeImage($dest);
+            $im->destroy();
+        } else {
+            if(!$img = @imagecreatefromstring($contents)) throw new Exception("Invalid thumbnail image.");
+            if(!$thumb = cropimage($img, 480, 252)) throw new Exception("Can't crop thumbnail image.");
+            if(IMG_EXT == '.webp' && !imagewebp($thumb, $dest)) throw new Exception("Can't save thumbnail image.");
+            elseif(!imagejpeg($thumb, $dest)) throw new Exception("Can't save thumbnail image.");
+            imagedestroy($img);
+            imagedestroy($thumb);
+        }
+        return realpath($dest);
+    }
+
+
 
 }
