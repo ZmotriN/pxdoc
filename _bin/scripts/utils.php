@@ -243,11 +243,23 @@ function curl_get_contents($file, $dest = null, $clb = null)
         CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_TIMEOUT        => 60,
         CURLOPT_CONNECTTIMEOUT => 10,
-        CURLOPT_USERAGENT      => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
         CURLOPT_ENCODING       => 'gzip,deflate',
         CURLOPT_NOPROGRESS     => ($clb ? false : true),
         CURLOPT_RETURNTRANSFER => ($dest ? false : true),
         CURLOPT_COOKIEFILE  => '',
+        CURLOPT_HTTPHEADER     => [
+            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'Accept-Language: fr-CA,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Sec-Ch-Ua: "Not_A Brand";v="99", "Google Chrome";v="109", "Chromium";v="109"',
+            'Sec-Ch-Ua-Mobile: ?0',
+            'Sec-Ch-Ua-Platform: "Windows"',
+            'Sec-Fetch-Dest: document',
+            'Sec-Fetch-Mode: navigate',
+            'Sec-Fetch-Site: none',
+            'Sec-Fetch-User: ?1',
+            'Upgrade-Insecure-Requests: 1',
+        ],
     ]);
     if ($clb) {
         $lastprog = -1;
@@ -273,7 +285,7 @@ function curl_get_contents($file, $dest = null, $clb = null)
     // print_r($info);
     curl_close($chnd);
     if (!empty($fhnd)) fclose($fhnd);
-    if (!in_array($info['http_code'], [200, 201])) $result = false;
+    if (!in_array($info['http_code'], [200, 201])) $results = false;
     return $dest ? ($results !== false) : $results;
 }
 
@@ -286,22 +298,6 @@ function shorthash($str)
 
 function cropimage($img, $w, $h)
 {
-    if(extension_loaded('imagick')) {
-
-    } else {
-        
-    }
-
-
-
-
-
-
-
-
-
-
-
     $height = ceil(($width = min(imagesx($img), imagesy($img) * $w / $h)) * $h / $w);
     $width = ceil($width);
     $offx = round((imagesx($img) - $width) / 2);
@@ -357,6 +353,124 @@ function get_absolute_url(string $baseUrl, string $relativePath): string {
     return $baseParts['scheme'] . '://' . $baseParts['host'] . '/' . ltrim($newPath, '/');
 }
 
+
+function getRepresentativeColors($imagePath, $numColors = 5, $tolerance = 30) {
+    $imagick = new Imagick($imagePath);
+    $imagick->quantizeImage($numColors + 2, Imagick::COLORSPACE_RGB, 0, false, false);
+    $histogram = $imagick->getImageHistogram();
+    
+    $colors = [];
+    foreach ($histogram as $pixel) {
+        $color = $pixel->getColor();
+        $r = $color['r'];
+        $g = $color['g'];
+        $b = $color['b'];
+        
+        // Exclure le blanc et le noir
+        if (!($r > 255 - $tolerance && $g > 255 - $tolerance && $b > 255 - $tolerance) && // Pas du blanc
+            !($r < $tolerance && $g < $tolerance && $b < $tolerance)) { // Pas du noir
+            $colors[] = [
+                'color' => sprintf("#%02x%02x%02x", $r, $g, $b),
+                'count' => $pixel->getColorCount()
+            ];
+        }
+    }
+    
+    // Trier par fréquence d'apparition
+    usort($colors, function($a, $b) {
+        return $b['count'] - $a['count'];
+    });
+    
+    return array_slice(array_column($colors, 'color'), 0, $numColors);
+}
+
+
+function getRepresentativeColorsGD($imagePath, $numColors = 5, $tolerance = 30) {
+    $image = imagecreatefromjpeg($imagePath);
+    if (!$image) return [];
+
+    $width = imagesx($image);
+    $height = imagesy($image);
+    
+    $colorCounts = [];
+    
+    // Scanner chaque pixel
+    for ($x = 0; $x < $width; $x++) {
+        for ($y = 0; $y < $height; $y++) {
+            $rgb = imagecolorat($image, $x, $y);
+            $r = ($rgb >> 16) & 0xFF;
+            $g = ($rgb >> 8) & 0xFF;
+            $b = $rgb & 0xFF;
+            
+            // Exclure le blanc et le noir
+            if (!($r > 255 - $tolerance && $g > 255 - $tolerance && $b > 255 - $tolerance) && 
+                !($r < $tolerance && $g < $tolerance && $b < $tolerance)) {
+                
+                $colorHex = sprintf("#%02x%02x%02x", $r, $g, $b);
+                
+                if (!isset($colorCounts[$colorHex])) {
+                    $colorCounts[$colorHex] = 0;
+                }
+                $colorCounts[$colorHex]++;
+            }
+        }
+    }
+    imagedestroy($image);
+    
+    // Trier les couleurs par fréquence d'apparition
+    arsort($colorCounts);
+    
+    return array_slice(array_keys($colorCounts), 0, $numColors);
+}
+
+
+// // Exemple d'utilisation
+// $imagePath = 'chemin/vers/image.jpg';
+// print_r(getRepresentativeColors($imagePath));
+
+
+
+function url_exists($url, $mimereg = null) {
+    if(!is_url($url)) return false;
+    if(!$info = curl_get_info($url)) return false;
+    if($mimereg && !preg_match('#' . $mimereg . '#i', $info['content_type'])) return false;
+    return ($info['http_code'] >= 200 && $info['http_code'] < 400);
+}
+
+
+
+function curl_get_info($url) {
+    if(!is_url($url)) return false;
+    if(($info = Cache::get(($key = 'curlinfo_' . shorthash($url)))) === null) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch,[
+            CURLOPT_NOBODY         => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_USERAGENT      => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+            CURLOPT_ENCODING       => 'gzip, deflate',
+            CURLOPT_COOKIEFILE     => '',
+            CURLOPT_HTTPHEADER     => [
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+                'Accept-Language: fr-CA,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Sec-Ch-Ua: "Not_A Brand";v="99", "Google Chrome";v="109", "Chromium";v="109"',
+                'Sec-Ch-Ua-Mobile: ?0',
+                'Sec-Ch-Ua-Platform: "Windows"',
+                'Sec-Fetch-Dest: document',
+                'Sec-Fetch-Mode: navigate',
+                'Sec-Fetch-Site: none',
+                'Sec-Fetch-User: ?1',
+                'Upgrade-Insecure-Requests: 1',
+        ]]);
+        curl_exec($ch);
+        $info = curl_getinfo($ch);
+        curl_close($ch);
+        Cache::set($key, $info);
+    }
+    return $info;
+}
 
 
 

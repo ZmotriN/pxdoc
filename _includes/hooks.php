@@ -263,7 +263,7 @@ register_tag('boxlink', function($html, $attrs, $data) {
             // print_r($metas);
 
             if(empty($metas->image)) throw new Exception("No thumbnail image found.");
-            $destimg = pathinfo($this->file, PATHINFO_DIRNAME) . '/images/' . 'thumb_' . shorthash($metas->url) . IMG_EXT;
+            $destimg = pathinfo($this->file, PATHINFO_DIRNAME) . '/images/' . 'thumb_' . shorthash($metas->image) . IMG_EXT;
             if(!is_file($destimg)) {
                 // print_r($metas);
                 if(!is_dir(pathinfo($destimg, PATHINFO_DIRNAME)) && !@mkdir(pathinfo($destimg, PATHINFO_DIRNAME)))
@@ -280,7 +280,7 @@ register_tag('boxlink', function($html, $attrs, $data) {
             $target = '_blank';
             $classes = ' extern';
         } catch(Exception $e) {
-            return errcomp($e->getMessage(), "Boxlink Component Error");
+            return errcomp($e->getMessage() . (empty($metas) ? '' : '<br><pre>' . print_r($metas, true) . '</pre>'), "Boxlink Component Error");
         }
     } else {
         $path = $attrs['href'];
@@ -298,9 +298,9 @@ register_tag('boxlink', function($html, $attrs, $data) {
         $classes = '';
     }
 
-
+    $atitle = htmlentities($title, ENT_COMPAT);
     return <<<EOD
-        <a class="boxlink" target="{$target}" href="{$url}">
+        <a class="boxlink" rel="noopener noreferrer" target="{$target}" href="{$url}" title="{$atitle}">
             <div class="boxlink-container{$classes}">
                 <div class="boxlink-thumb" style="background-image: url({$thumb})"></div>
                 <div class="boxlink-abstract">

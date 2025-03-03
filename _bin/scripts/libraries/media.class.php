@@ -101,7 +101,7 @@ class Media
 
     public static function downloadImage($url, $dest, $width, $height)
     {
-
+        if(!url_exists($url, '^image/')) throw new Exception("Image crawling seems to have been block.");
         if(!$contents = curl_get_contents($url)) throw new Exception("Can't download thumbnail image.");
 
         if(IMAGICK_SUPPORT) {

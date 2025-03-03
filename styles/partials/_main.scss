@@ -6,6 +6,8 @@
 
 html {
     scroll-behavior: smooth;
+    font-family: var(--font);
+    font-size: min(var(--font-size-resp), var(--font-size-base));
 }
 
 
@@ -13,9 +15,7 @@ body {
     color: var(--color-black);
     background-color: var(--color-white);
     height: 100vh;
-    font-family: var(--font);
     scrollbar-color: dark;
-    font-size: min(var(--font-size-resp), var(--font-size-base));
     overflow-x: hidden;
 
     &:has(header) {
