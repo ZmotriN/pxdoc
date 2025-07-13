@@ -563,7 +563,7 @@ app.component('tabledesmatieres', {
  ******************************************************/
 app.component('grostitre', {
     data() {
-        if(!this.$slots.default()[0].children) return {};
+        if(typeof this.$slots.default === 'undefined') return null;
         return { id: lowslug(this.$slots.default()[0].children) }
     },
     created() {
