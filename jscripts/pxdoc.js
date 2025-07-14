@@ -22,6 +22,10 @@ const bind = (elm, evt, clb) => {
         elm.addEventListener(evt, clb);
     }
 }
+HTMLElement.prototype.bind = function (evt, clb) {
+    this.addEventListener(evt, clb);
+    return this;
+};
 
 
 /******************************************************
@@ -37,6 +41,25 @@ HTMLElement.prototype.create = function(tag, classname=null) {
     this.append(elm);
     return elm;
 }
+
+
+/******************************************************
+ *                        Query                       *
+ ******************************************************/
+const query = (selector, all = false) => {
+    if (all) return document.querySelectorAll(selector);
+    else return document.querySelector(selector);
+};
+
+
+/******************************************************
+ *                        Ready                       *
+ ******************************************************/
+const ready = evt => {
+    document.addEventListener('DOMContentLoaded', e => {
+        evt(e);
+    });
+};
 
 
 /******************************************************
