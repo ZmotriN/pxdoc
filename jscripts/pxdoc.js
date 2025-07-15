@@ -74,6 +74,17 @@ const now = () => {
 
 
 /******************************************************
+ *                 Scroll to element                  *
+ ******************************************************/
+const scrollTo = function(elm) {
+    var bodyRect = document.body.getBoundingClientRect(),
+        elemRect = elm.getBoundingClientRect(),
+        offset   = elemRect.top - bodyRect.top;
+    window.scrollTo(0, offset-8);
+}
+
+
+/******************************************************
  *                Get a sync json file                *
  ******************************************************/
 const syncjson = (url) => {
