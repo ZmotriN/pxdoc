@@ -119,6 +119,29 @@ const openJsonFile = (clb=null) => {
 
 
 /******************************************************
+ *               Callback from a string               *
+ ******************************************************/
+const callFromString = function (path, ...args) {
+    const parts = path.split(".");
+    let context = window;
+    for (let i = 0; i < parts.length - 1; i++) {
+        context = context[parts[i]];
+        if (!context) {
+            console.error(`Cannot resolve: ${parts[i]}`);
+            return;
+        }
+    }
+    const methodName = parts[parts.length - 1];
+    const method = context[methodName];
+    if (typeof method === "function") {
+        return method.apply(context, args);
+    } else {
+        console.error(`${methodName} is not a function`);
+    }
+}
+
+
+/******************************************************
  *           Convert decimal to hex string            *
  ******************************************************/
 const decimalToHexString = (number) => {
@@ -1238,6 +1261,7 @@ app.component('gallery', {
  *                Composante Checklist                *
  ******************************************************/
 app.component('checklist', {
+    props: ['memory', 'callback'],
     data() {
         var text = '';
         this.$slots.default().forEach(elm => {
@@ -1254,7 +1278,7 @@ app.component('checklist', {
         text.trim().split('\n').map(v => { lines.push(v.trim()); });
         var hash = this.getHash(lines.join());
         let cookieValue = localStorage.getItem('checklist-' + hash);
-        if (typeof cookieValue == 'string') {
+        if (typeof cookieValue == 'string' && this.memory !== 'false') {
             var checks = cookieValue.split(',').map((val) => { return parseInt(val); });
             if (checks.length != lines.length) {
                 checks = [];
@@ -1268,7 +1292,9 @@ app.component('checklist', {
             hash: hash,
             list: lines,
             checks: checks,
-            progress: 0
+            progress: 0,
+            memory: this.memory == 'false' ? false : true,
+            callback: this.callback
         }
     },
     created() {
@@ -1302,6 +1328,9 @@ app.component('checklist', {
             let total = 0;
             this.checks.forEach(val => { total += val; });
             this.progress = (total / this.checks.length * 100).toFixed(0);
+            if(typeof this.callback == 'string') {
+                try { callFromString(this.callback,  (total / this.checks.length)); } catch(e) {}
+            }
         }
     },
     template:
