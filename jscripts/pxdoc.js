@@ -400,21 +400,22 @@ const getScaledTextFontSize = (text, width) => {
  *                    Modal Message                   *
  ******************************************************/
  const MessageModal = {
+    _clb: null,
     _modal: null,
     get modal() {
         if(!this._modal) {
             this._modal = new Modal();
-            bind(this._modal.cont, 'mousedown', (evt) => { this._modal.hide(); });
-            bind(document, 'keydown', (evt) => { if(this._modal.opened && (evt.key === 'Escape' && !(evt.ctrlKey || evt.altKey || evt.shiftKey))) { this._modal.hide(); } });
+            bind(this._modal.cont, 'mousedown', (evt) => { this._modal.hide(); if(this._clb) this._clb(); });
+            bind(document, 'keydown', (evt) => { if(this._modal.opened && (evt.key === 'Escape' && !(evt.ctrlKey || evt.altKey || evt.shiftKey))) { this._modal.hide(); if(this._clb) this._clb(); } });
         }
         return this._modal;
     },
-    setMessage(type, msg) { this.modal.show(`<div class="modal-message"><div class="infobubble ${type}"><div class="infobubble__bubble"></div>${msg}</div></div>`); },
-    info(msg) { this.setMessage('info', msg); },
-    warning(msg) { this.setMessage('warning', msg); },
-    alert(msg) { this.setMessage('alert', msg); },
-    bravo(msg) { this.setMessage('bravo', msg); },
-    thumbsup(msg) { this.setMessage('thumbsup', msg); } 
+    setMessage(type, msg, clb=null) { this._clb = clb; this.modal.show(`<div class="modal-message"><div class="infobubble ${type}"><div class="infobubble__bubble"></div>${msg}</div></div>`); },
+    info(msg, clb=null) { this.setMessage('info', msg, clb); },
+    warning(msg, clb=null) { this.setMessage('warning', msg, clb); },
+    alert(msg, clb=null) { this.setMessage('alert', msg, clb); },
+    bravo(msg, clb=null) { this.setMessage('bravo', msg, clb); },
+    thumbsup(msg, clb=null) { this.setMessage('thumbsup', msg, clb); } 
 }
 
 
