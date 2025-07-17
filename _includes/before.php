@@ -6,6 +6,7 @@ if(empty($info['header'])) return;
 if(is_string($info['header'])) $info['header'] = [$info['header']];
 
 $PAGE->shared = get_shared($PAGE->file);
+$PAGE->rooturl = get_root($PAGE->file);
 $root = str_replace('\\', '/', realpath($PAGE->root)) . '/';
 $image = $PAGE->baseurl . 'pxdoc/images/default.webp';
 if($PAGE->image) {
