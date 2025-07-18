@@ -25,6 +25,7 @@
         <link rel="icon" type="image/x-icon" href="<?php echo $PAGE->shared; ?>images/favicon.ico">
         <?php foreach($styles as $cssfile): ?><link rel="stylesheet" href="<?php echo $cssfile; ?>">
         <?php endforeach;?><script>const shared = '<?php echo $PAGE->shared; ?>';</script>
+        <script>const root = '<?php echo $PAGE->rooturl; ?>';</script>
         <?php foreach($scripts as $scriptfile): ?><script src="<?php echo $scriptfile; ?>"></script>
         <?php endforeach;?><title><?php echo strip_tags($PAGE->title); ?></title>
     </head>

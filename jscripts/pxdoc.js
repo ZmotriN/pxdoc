@@ -31,13 +31,14 @@ HTMLElement.prototype.bind = function (evt, clb) {
 /******************************************************
  *                    Create Element                  *
  ******************************************************/
-const create = (tag, classname=null) => {
+const create = (tag, classname=null, content=null) => {
     const elm = document.createElement(tag);
     if(classname) elm.className = classname;
+    if(content) elm.innerHTML = content;
     return elm;
 }
-HTMLElement.prototype.create = function(tag, classname=null) {
-    const elm = create(tag, classname);
+HTMLElement.prototype.create = function(tag, classname=null, content=null) {
+    const elm = create(tag, classname, content);
     this.append(elm);
     return elm;
 }
@@ -60,6 +61,14 @@ const ready = evt => {
         evt(e);
     });
 };
+
+
+/******************************************************
+ *                        Sleep                       *
+ ******************************************************/
+const sleep = ms => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 
 /******************************************************
