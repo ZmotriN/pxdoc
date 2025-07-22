@@ -439,9 +439,9 @@ function url_exists($url, $mimereg = null) {
 
 
 
-function curl_get_info($url) {
+function curl_get_info($url, $cache = true) {
     if(!is_url($url)) return false;
-    if(($info = Cache::get(($key = 'curlinfo_' . shorthash($url)))) === null) {
+    if(($info = Cache::get(($key = 'curlinfo_' . shorthash($url)))) === null || !$cache) {
         $ch = curl_init($url);
         curl_setopt_array($ch,[
             CURLOPT_NOBODY         => true,
