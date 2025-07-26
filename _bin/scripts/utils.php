@@ -219,7 +219,7 @@ function dig($path)
 
 function is_url($str)
 {
-    if (!$sheme = strtolower(@parse_url($str, PHP_URL_SCHEME))) return false;
+    if (!$sheme = strtolower(@parse_url($str, PHP_URL_SCHEME) ?? '')) return false;
     return in_array($sheme, ['http', 'https', 'itunes', 'ftp', 'ftps', 'ssh', 'ssl', 'sftp']);
 }
 

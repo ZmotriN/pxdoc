@@ -9,7 +9,6 @@
 
 */
 
-
 /******************************************************
  *                      Bind Event                    *
  ******************************************************/
@@ -1191,7 +1190,7 @@ app.component('gallery', {
         let images = [];
         let slides = [];
         let thslides = [];
-        this.$slots.default()[0].children.trim().split('\n').forEach(elm => {
+        this.$slots.default()[0].children.trim().split(/\r?\n|\r/).forEach(elm => {
             let img = (new URL(elm.trim(), document.baseURI)).href;
             thslides.push('<div class="swiper-slide"><img src="' + img + '"></div>');
             slides.push('<div class="swiper-slide" style="background-image: url(\'' + img + '\')"><img src="' + img + '"></div>');
@@ -1296,7 +1295,7 @@ app.component('checklist', {
             }
         });
         var lines = [];
-        text.trim().split('\n').map(v => { lines.push(v.trim()); });
+        text.trim().split(/\r?\n|\r/).map(v => { lines.push(v.trim()); });
         var hash = this.getHash(lines.join());
         let cookieValue = localStorage.getItem('checklist-' + hash);
         if (typeof cookieValue == 'string' && this.memory !== 'false') {

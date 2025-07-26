@@ -1,1 +1,1 @@
-@php "%~dp0..\scripts\pxclip.php" %1
+@"%~dp0..\..\..\node_modules\.bin\php-bulk" "%~dp0..\scripts\pxclip.php" %1
