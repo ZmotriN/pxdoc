@@ -28,6 +28,10 @@ body.dark {
 
     #wiki__list { background-image: linear-gradient(to right, var(--main-color-light-alpha9), #000000); }
     
+    #title img[src*="pxdoc/images/logo.svg"],
+    div.breadcrum-logo {
+        filter: invert(100%);
+    }
 
 
 
