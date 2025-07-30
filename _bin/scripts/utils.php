@@ -199,20 +199,20 @@ function php_file_info($file)
  * Recursevly walk a folder and yield files corresponding to the pattern
  *
  * @param  mixed $path Path and pattern to walk through
- * @return void
+ * @return iterable
  */
-function dig($path)
+function dig($path): iterable
 {
     $patt = pathinfo($path, PATHINFO_BASENAME);
     $path = pathinfo($path, PATHINFO_DIRNAME);
-    if (!$path = realpath($path)) return;
-    else $path .= S;
-    foreach (glob($path . $patt) as $file) {
-        if (is_dir($file)) continue;
-        else yield $file;
-    }
-    foreach (glob($path . '*', GLOB_ONLYDIR) as $dir) {
-        foreach (call_user_func(__FUNCTION__, $dir . S . $patt) as $file) yield $file;
+    if ($path = realpath($path)) {
+        $path .= S;
+        foreach (glob($path . $patt) as $file) {
+            if (!is_dir($file)) yield $file;
+        }
+        foreach (glob($path . '*', GLOB_ONLYDIR) as $dir) {
+            foreach (call_user_func(__FUNCTION__, $dir . S . $patt) as $file) yield $file;
+        }
     }
 }
 
@@ -351,37 +351,6 @@ function get_absolute_url(string $baseUrl, string $relativePath): string {
     
     $newPath = implode('/', $resolvedParts);
     return $baseParts['scheme'] . '://' . $baseParts['host'] . '/' . ltrim($newPath, '/');
-}
-
-
-function getRepresentativeColors($imagePath, $numColors = 5, $tolerance = 30) {
-    $imagick = new Imagick($imagePath);
-    $imagick->quantizeImage($numColors + 2, Imagick::COLORSPACE_RGB, 0, false, false);
-    $histogram = $imagick->getImageHistogram();
-    
-    $colors = [];
-    foreach ($histogram as $pixel) {
-        $color = $pixel->getColor();
-        $r = $color['r'];
-        $g = $color['g'];
-        $b = $color['b'];
-        
-        // Exclure le blanc et le noir
-        if (!($r > 255 - $tolerance && $g > 255 - $tolerance && $b > 255 - $tolerance) && // Pas du blanc
-            !($r < $tolerance && $g < $tolerance && $b < $tolerance)) { // Pas du noir
-            $colors[] = [
-                'color' => sprintf("#%02x%02x%02x", $r, $g, $b),
-                'count' => $pixel->getColorCount()
-            ];
-        }
-    }
-    
-    // Trier par fréquence d'apparition
-    usort($colors, function($a, $b) {
-        return $b['count'] - $a['count'];
-    });
-    
-    return array_slice(array_column($colors, 'color'), 0, $numColors);
 }
 
 
