@@ -181,38 +181,14 @@ EOD;
 }
 
 
-/**
- * Print internal link like listing
- *
- * @param  mixed $path Internal relative path
- * @return void
- */
-function intlink($path=null){
-    if(!$path) return;
-    if(strpos($path, '#') !== false) list($path, $anchor) = explode('#', $path);
-    $path = rtrim($path,'/\\');
-    $parent = pathinfo(current(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,1))['file'], PATHINFO_DIRNAME);
-    if(!$target = realpath($parent.'/'.$path)) return;
-    if(!$info = php_file_info($target.'/_index.php')) return;
-        ?>
-            <div class="intlink__item">
-                <div class="intlink__item__icon" style="background-image: url('<?php echo $path . '/' . $info->icon; ?>');"></div>
-                <div class="intlink__item__description">
-                    <span class="intlink__item__title"><a href="<?php echo  !empty($info->url) ? $info->url : $path; ?>/<?php echo (!empty($anchor) ? '#'.$anchor : ''); ?>"><?php echo $info->title; ?></a></span>
-                    <span class="intlink__item__abstract"><?php echo $info->abstract; ?></span>
-                </div>
-            </div>
-        <?php
-    return true;
-}
 
 
 /**
  * getIndexReferences
  *
- * @return void
+ * @return iterable
  */
-function getIndexReferences($name=null) {
+function getIndexReferences($name=null): iterable {
     static $references = null;
     global $PAGE;
     if($references === null) {

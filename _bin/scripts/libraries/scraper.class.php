@@ -247,7 +247,8 @@ class Scraper
 
 
 	private static function loadHTML($contents) {
-		$contents = mb_convert_encoding($contents, 'HTML-ENTITIES', 'UTF-8');
+        $encoding = mb_detect_encoding($contents, 'UTF-8, ISO-8859-1, ISO-8859-15', true);
+        if ($encoding !== 'UTF-8') $contents = mb_convert_encoding($contents, 'UTF-8', $encoding);
 		$dom = new DomDocument('1.0', 'UTF-8');
 		$dom->preserveWhiteSpace = false;
 		@$dom->loadHTML($contents);

@@ -13,7 +13,7 @@ class Media
         if(!$force && is_file($pngdark) && is_file($pnglight)) return true;
 
         if(!extension_loaded('gd')) throw new Exception("GD PHP Extension required.");
-        if(!where('audiowaveform')) throw new Exception("AudioWaveForm not found.");
+        // if(!where('audiowaveform')) throw new Exception("AudioWaveForm not found.");
         
         if(!$data = self::getMediaInfo($file)) throw new Exception("Invalid media file.");
         if(empty($data->media)) throw new Exception("Invalid audio file.");
@@ -29,8 +29,8 @@ class Media
         if(!isset($samplingCount)) throw new Exception("No audio track found.");
         $zoom = round($samplingCount / $width, 5);
 
-        shell_exec('audiowaveform -i ' . escapeshellarg($file) . ' -o ' . $pngdark . ' --quiet --amplitude-scale ' . $amplitude . ' --border-color ' . $colors->white . ' --axis-label-color ' . $colors->white . ' --background-color 00000000 --waveform-color ' . $colors->main . ' --width ' . $width . ' --height ' . $height . ' --zoom ' . $zoom);
-        shell_exec('audiowaveform -i ' . escapeshellarg($file) . ' -o ' . $pnglight . ' --quiet --amplitude-scale ' . $amplitude . ' --border-color ' . $colors->black . ' --axis-label-color ' . $colors->black . ' --background-color ffffff00 --waveform-color ' . $colors->main . ' --width ' . $width . ' --height ' . $height . ' --zoom ' . $zoom);
+        shell_exec(escapeshellarg(MODULES_PATH . 'audiowaveform') . ' -i ' . escapeshellarg($file) . ' -o ' . $pngdark . ' --quiet --amplitude-scale ' . $amplitude . ' --border-color ' . $colors->white . ' --axis-label-color ' . $colors->white . ' --background-color 00000000 --waveform-color ' . $colors->main . ' --width ' . $width . ' --height ' . $height . ' --zoom ' . $zoom);
+        shell_exec(escapeshellarg(MODULES_PATH . 'audiowaveform') . ' -i ' . escapeshellarg($file) . ' -o ' . $pnglight . ' --quiet --amplitude-scale ' . $amplitude . ' --border-color ' . $colors->black . ' --axis-label-color ' . $colors->black . ' --background-color ffffff00 --waveform-color ' . $colors->main . ' --width ' . $width . ' --height ' . $height . ' --zoom ' . $zoom);
 
         foreach([$pngdark, $pnglight] as $png) {
             if(!is_file($png)) throw new Exception("Can't extract waveform.");
@@ -60,7 +60,7 @@ class Media
 
         if(!$force && is_file($destjpeg) && is_file($destjson)) return json_decode(file_get_contents($destjson));
 
-        if(!where('ffmpeg')) throw new Exception("FFMPEG not found.");
+        // if(!where('ffmpeg')) throw new Exception("FFMPEG not found.");
 
         if(!$data = self::getMediaInfo($file)) throw new Exception("Invalid media file.");
         if(empty($data->media)) throw new Exception("Invalid video file.");
@@ -75,7 +75,7 @@ class Media
         if(empty($videofound)) throw new Exception("No video track found on media.");
         file_put_contents($destjson, json_encode($data, JSON_PRETTY_PRINT));
 
-        shell_exec('ffmpeg -hide_banner -loglevel quiet -ss 1 -y -i ' . escapeshellarg($file) . ' -an -vframes 1 ' . escapeshellarg($destjpeg));
+        shell_exec(escapeshellarg(MODULES_PATH . 'ffmpeg') . ' -hide_banner -loglevel quiet -ss 1 -y -i ' . escapeshellarg($file) . ' -an -vframes 1 ' . escapeshellarg($destjpeg));
         if(!is_file($destjpeg)) throw new Exception("Can't extract still frame.");
 
         return $data;
@@ -90,8 +90,8 @@ class Media
         $key = 'mediainfo_' . shorthash(filemtime($file) . $file);
         if($info = Cache::get($key)) return $info;
 
-        if(!where('mediainfo')) throw new Exception("MediaInfo not found.");
-        if(!$json = trim(shell_exec('mediainfo ' . escapeshellarg($file) . ' --output=JSON'))) throw new Exception("Can't extract file info.");;
+        // if(!where('mediainfo')) throw new Exception("MediaInfo not found.");
+        if(!$json = trim(shell_exec(escapeshellarg(MODULES_PATH . 'mediainfo') .  ' ' . escapeshellarg($file) . ' --Output=JSON'))) throw new Exception("Can't extract file info.");;
         if(!$data = json_decode($json)) throw new Exception("Invalid media file.");
 
         Cache::set($key, $data);
@@ -99,45 +99,15 @@ class Media
     }
 
 
-    public static function downloadImage($url, $dest, $width, $height)
+    public static function downloadImage(string $url, string $dest, int $width, int $height): string | false
     {
         if(!url_exists($url, '^image/')) throw new Exception("Image crawling seems to have been block.");
         if(!$contents = curl_get_contents($url)) throw new Exception("Can't download thumbnail image.");
-
-        if(IMAGICK_SUPPORT) {
-            $im = new Imagick;
-            $im->readImageBlob($contents);
-
-            $originalWidth = $im->getImageWidth();
-            $originalHeight = $im->getImageHeight();
-            $aspectRatio = $originalWidth / $originalHeight;
-            $targetAspectRatio = $width / $height;
-            
-            if ($aspectRatio > $targetAspectRatio) {
-                $newHeight = $originalHeight;
-                $newWidth = (int)($originalHeight * $targetAspectRatio);
-            } else {
-                $newWidth = $originalWidth;
-                $newHeight = (int)($originalWidth / $targetAspectRatio);
-            }
-            
-            $cropX = (int)(($originalWidth - $newWidth) / 2);
-            $cropY = (int)(($originalHeight - $newHeight) / 2);
-            
-            $im->cropImage($newWidth, $newHeight, $cropX, $cropY);
-            $im->resizeImage($width, $height, Imagick::FILTER_LANCZOS, 1);
-            $im->setImageFormat('webp');
-            $im->setOption('webp:method', '6'); 
-            $im->writeImage($dest);
-            $im->destroy();
-        } else {
-            if(!$img = @imagecreatefromstring($contents)) throw new Exception("Invalid thumbnail image.");
-            if(!$thumb = cropimage($img, 480, 252)) throw new Exception("Can't crop thumbnail image.");
-            if(IMG_EXT == '.webp' && !imagewebp($thumb, $dest)) throw new Exception("Can't save thumbnail image.");
-            elseif(!imagejpeg($thumb, $dest)) throw new Exception("Can't save thumbnail image.");
-            imagedestroy($img);
-            imagedestroy($thumb);
-        }
+        if(!$img = @imagecreatefromstring($contents)) throw new Exception("Invalid thumbnail image.");
+        if (!$thumb = cropimage($img, $width, $height)) throw new Exception("Can't crop thumbnail image.");
+        if (!imagewebp($thumb, $dest, 60)) throw new Exception("Can't save thumbnail image.");
+        imagedestroy($img);
+        imagedestroy($thumb);
         return realpath($dest);
     }
 

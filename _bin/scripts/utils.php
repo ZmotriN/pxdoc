@@ -9,6 +9,7 @@ define('IMAGICK_SUPPORT', extension_loaded('imagick'));
 define('GD_SUPPORT', extension_loaded('gd'));
 define('WEBP_SUPPORT', IMAGICK_SUPPORT || function_exists('imagewebp'));
 define('IMG_EXT', WEBP_SUPPORT ? '.webp' : '.jpg');
+define('MODULES_PATH', realpath(__DIR__ . '/../../../node_modules/.bin').S);
 
 
 function where($file)
@@ -440,6 +441,18 @@ function curl_get_info($url, $cache = true) {
     }
     return $info;
 }
+
+
+function convertEncoding($string, $toEncoding, $fromEncoding)
+{
+    if (function_exists('iconv')) {
+        return iconv($fromEncoding, $toEncoding . '//TRANSLIT', $string);
+    } else {
+        throw new Exception('iconv function is not available.');
+    }
+}
+
+
 
 
 
