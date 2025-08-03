@@ -5,7 +5,7 @@ if(!$info = register_page_type($PAGE->type)) return;
 if(empty($info['header'])) return;
 if(is_string($info['header'])) $info['header'] = [$info['header']];
 
-$PAGE->shared = get_shared($PAGE->file);
+$PAGE->shared = PXPros::findShared($PAGE->file);
 $PAGE->rooturl = get_relative_path($PAGE->file, $PAGE->root);
 $root = str_replace('\\', '/', realpath($PAGE->root)) . '/';
 $image = $PAGE->baseurl . 'pxdoc/images/default.webp';

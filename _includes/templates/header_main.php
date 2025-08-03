@@ -1,5 +1,5 @@
         <a id="top"></a>
-        <div id="logo" @click="goToTop('<?php echo getProjectRoot(); ?>', '<?php echo getIndexPath(); ?>')" title="<?php echo lang('returnHome'); ?>"></div>
+        <div id="logo" @click="goToTop('<?php echo PXPros::findRoot($PAGE->file); ?>', '<?php echo getIndexPath(); ?>')" title="<?php echo lang('returnHome'); ?>"></div>
         <div title="<?php echo lang('lightSwitch'); ?>" id="lightswitch" ref="lightswitch" @click="lightswitch()"></div>
         <header>
             <div id="breadcrumb">

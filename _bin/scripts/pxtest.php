@@ -2,25 +2,14 @@
 require_once(__DIR__ . '/utils.php');
 
 
-// print_r(find_colors());
+// echo PXPros::findSeed(__FILE__).RN;
 
+// echo PXPros::findRoot(__FILE__).RN;
 
-// var_dump(Cache::set('bleuh', 'caca'));
+// echo get_relative_path(__FILE__, __FILE__).RN;
 
-// var_dump(Cache::get('bleuh'));
-
-// echo date("T").RN;
-
-
-try {
-    print_r(Media::getMediaInfo($argv[1]));
-} catch(Exception $e) {
-    print_r($e);
-    exit(1);
-}
+// var_dump(get_relative_path(__DIR__, __DIR__ . '/test.php'));
 
 
 
-
-
-
+// var_dump(PXPros::findShared(__FILE__, true));

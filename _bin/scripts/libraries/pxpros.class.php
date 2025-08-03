@@ -3,6 +3,9 @@
 final class PXPros
 {
 
+    const SEED_FILE = '_pxpros.json';
+
+
     private $root;
     private $file;
     private $page;
@@ -168,15 +171,32 @@ final class PXPros
      * @param  mixed $path Current path
      * @return mixed Returns the project configuration file if exists, otherwise false.
      */
-    public static function findRoot($path)
+    public static function findSeed($path)
     {
         if (is_file($path)) $path = pathinfo(realpath($path), PATHINFO_DIRNAME);
         elseif (!$path = realpath($path)) return false;
         do {
-            $file = $path . S . '_pxpros.json';
-            if (is_file($file)) return $file;
+            $file = $path . S . self::SEED_FILE;
+            if (is_file($file)) return realpath($file);
             $path = pathinfo($path, PATHINFO_DIRNAME);
         } while ($path != pathinfo($path, PATHINFO_DIRNAME));
         return false;
     }
+
+
+    public static function findRoot(string $path, bool $abs = false)
+    {
+        if(!$seed = self::findSeed($path)) return false;
+        if(!$root = pathinfo($seed, PATHINFO_DIRNAME)) return false;
+        return $abs ?  $root . S : get_relative_path($path, $root);
+    }
+
+
+    public static function findShared(string $path, bool $abs = false)
+    {
+        $shared = realpath(__DIR__ . '/../../..');
+        return $abs ? $shared . S : get_relative_path($path, $shared);
+    }
+
+
 }

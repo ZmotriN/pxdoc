@@ -31,19 +31,6 @@ function where($file)
 }
 
 
-function find_root($path)
-{
-    if (is_file($path)) $path = pathinfo(realpath($path), PATHINFO_DIRNAME);
-    elseif (!$path = realpath($path)) return false;
-    do {
-        $file = $path . S . '_pxpros.json';
-        if (is_file($file)) return realpath($file);
-        $path = pathinfo($path, PATHINFO_DIRNAME);
-    } while ($path != pathinfo($path, PATHINFO_DIRNAME));
-    return false;
-}
-
-
 
 function err($str)
 {
@@ -57,7 +44,7 @@ function find_colors()
     static $colors = null;
 
     if ($colors === null) {
-        if (!$root = find_root(__FILE__)) return false;
+        if (!$root = PXPros::findSeed(__FILE__)) return false;
         if (!$config = json_decode(file_get_contents($root))) return false;
         if (!$cssfiles[0] = realpath(pathinfo($root, PATHINFO_DIRNAME) . '/pxdoc/styles/styles.min.css')) return false;
 
@@ -128,7 +115,7 @@ function get_relative_path($from, $to)
             }
         }
     }
-    return implode('/', $relPath);
+    return $relPath ? implode('/', $relPath) : './';
 }
 
 

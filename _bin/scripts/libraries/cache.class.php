@@ -10,8 +10,8 @@ class Cache
         static $db = null;
         if($db !== null) return $db;
         if(!extension_loaded('sqlite3')) throw new Exception("Sqlite3 PHP Extension required."); 
-        if(!$root = find_root(__FILE__)) throw new Exception("Can't find project root.");
-        if(!is_file(($dbfile = pathinfo($root, PATHINFO_DIRNAME) . '/.cache.db'))) $create = true;
+        if(!$root = PXPros::findRoot(__FILE__, true)) throw new Exception("Can't find project root.");
+        if(!is_file(($dbfile = $root . '.cache.db'))) $create = true;
         if(!$db = new SQLite3($dbfile)) throw new Exception("Can't open .cache.db.");
         if(!empty($create) && !$db->exec('CREATE TABLE "data" ("key" TEXT(128) NOT NULL, "val" TEXT DEFAULT NULL, PRIMARY KEY ("key")); CREATE UNIQUE INDEX "key" ON "data" ("key");')) throw new Exception("Can't create .cache.db.");
         return $db;

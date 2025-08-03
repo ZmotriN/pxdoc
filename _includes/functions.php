@@ -11,31 +11,6 @@ function __print_r($elm) {
 }
 
 
-/**
- * Get relative shared path
- *
- * @param  string $file The current project file
- * @return string The relative shared path
- */
-function get_shared($file){
-    global $PAGE;
-    $root = str_replace('\\', '/', realpath($PAGE->root));
-    $target = str_replace('\\', '/', pathinfo($file,PATHINFO_DIRNAME));
-    if(realpath($root) == realpath(pathinfo($file, PATHINFO_DIRNAME)))  return 'pxdoc/';
-    $backwards = count(explode('/', ltrim(str_replace($root, '', $target), '/')));
-    return join('/', array_fill(0, $backwards, '..')).'/pxdoc/';
-}
-
-
-function get_root($file){
-    global $PAGE;
-    $root = str_replace('\\', '/', realpath($PAGE->root));
-    $target = str_replace('\\', '/', pathinfo($file,PATHINFO_DIRNAME));
-    if(realpath($root) == realpath(pathinfo($file, PATHINFO_DIRNAME)))  return 'pxdoc/';
-    $backwards = count(explode('/', ltrim(str_replace($root, '', $target), '/')));
-    return join('/', array_fill(0, $backwards, '..')).'/';
-}
-
 
 /**
  * Generate and print the breadcrumb
@@ -83,18 +58,6 @@ function print_breadcrumb_index() {
     }
 }
 
-
-/**
- * getProjectRoot
- *
- * @return void
- */
-function getProjectRoot() {
-    global $PAGE;
-    $path = get_relative_path($PAGE->file, $PAGE->root);
-    if(!$path) $path = './';
-    return $path;
-}
 
 
 /**
