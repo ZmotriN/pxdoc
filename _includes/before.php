@@ -8,7 +8,7 @@ if(is_string($info['header'])) $info['header'] = [$info['header']];
 $PAGE->shared = PXPros::findShared($PAGE->file);
 $PAGE->rooturl = get_relative_path($PAGE->file, $PAGE->root);
 $root = str_replace('\\', '/', realpath($PAGE->root)) . '/';
-$image = $PAGE->baseurl . 'pxdoc/images/default.webp';
+$image = $PAGE->baseurl . $PAGE->image;
 if($PAGE->image) {
     if($img = realpath(pathinfo($PAGE->file, PATHINFO_DIRNAME) . '/' . $PAGE->image)) {
         $image = str_replace($root, $PAGE->baseurl, str_replace('\\', '/', $img));
@@ -31,10 +31,11 @@ foreach($pstyles as $cssfile) {
     $styles[] = get_relative_path($PAGE->file, $cssfile);
 }
 
-$scripts[] = $PAGE->shared . 'jscripts/highlight.min.js';
-$scripts[] = $PAGE->shared . 'jscripts/swiper-bundle.min.js';
-$scripts[] = $PAGE->shared . 'jscripts/vue.global.prod.js';
-$scripts[] = $PAGE->shared . 'jscripts/pxdoc.min.js';
+// $scripts[] = $PAGE->shared . 'jscripts/highlight.min.js';
+// $scripts[] = $PAGE->shared . 'jscripts/swiper-bundle.min.js';
+// $scripts[] = $PAGE->shared . 'jscripts/vue.global.prod.js';
+// $scripts[] = $PAGE->shared . 'jscripts/pxdoc.min.js';
+$scripts[] = $PAGE->shared . 'jscripts/bundle.min.js';
 $pscripts = $PAGE->scripts;
 if(empty($pscripts)) $pscripts = [];
 if(is_string($pscripts)) $pscripts = [$pscripts];

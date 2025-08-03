@@ -1034,7 +1034,7 @@ app.component('clip', {
         let url = new URL(this.src, document.baseURI);
         let name = url.pathname.split('.').shift();
         return {
-            thumbnail_url: name + '.jpg',
+            thumbnail_url: name + '.webp',
             playbtn: 'block',
             player: ''
         }

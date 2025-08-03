@@ -430,15 +430,26 @@ function curl_get_info($url, $cache = true) {
 }
 
 
-function convertEncoding($string, $toEncoding, $fromEncoding)
+
+function who_is(bool $force = false)
 {
-    if (function_exists('iconv')) {
-        return iconv($fromEncoding, $toEncoding . '//TRANSLIT', $string);
-    } else {
-        throw new Exception('iconv function is not available.');
-    }
+    if(!$force && ($info = Cache::get('who_is'))) return $info;
+    if(!$data = curl_get_contents('https://ipwho.is/')) return false;
+    if(!$info = json_decode($data)) return false;
+    Cache::set('who_is', $info);
+    return $info;
 }
 
+
+
+
+function set_default_timezone(bool $force = false)
+{
+    if(!$info = who_is($force)) return false;
+    if(empty($info->timezone)) return false;
+    if(empty($info->timezone->id)) return false;
+    return date_default_timezone_set($info->timezone->id);
+}
 
 
 
@@ -471,7 +482,6 @@ function register_hook($name, $clb)
 }
 
 
-
 spl_autoload_register(function ($class) {
     static $catalog = [
         'Cache'   => 'cache.class.php',
@@ -481,3 +491,5 @@ spl_autoload_register(function ($class) {
     ];
     if (isset($catalog[$class])) require_once(__DIR__ . '/libraries/' . $catalog[$class]);
 }, true, true);
+
+set_default_timezone();
