@@ -954,9 +954,13 @@ app.component('doclink', {
             let url = new URL(this.href);
             if(this.domains[url.hostname] !== undefined) site = this.domains[url.hostname];
         } catch (e) {
-            if (this.href.split('.').pop().toLocaleLowerCase() == 'zip') site = 'zipfile';
-            else if (this.href.split('.').pop().toLocaleLowerCase() == 'pdf') site = 'pdffile';
-            target = '_self';
+            if (this.href.split('.').pop().toLocaleLowerCase() == 'zip') {
+                site = 'zipfile';
+				target = '_self';
+            } else if (this.href.split('.').pop().toLocaleLowerCase() == 'pdf') {
+                site = 'pdffile';
+				target = '_blank';
+            } else target = '_self';
         }
         if (this.spacer == 'true') site += ' spacer';
         return { class: site, target: target }

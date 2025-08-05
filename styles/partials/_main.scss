@@ -177,7 +177,7 @@ header {
             top: 4px;
         }
 
-        img[src*="pxdoc/images/logo.svg"] {
+        img[src*=".svg"] {
             border-radius: unset;
         }
     }  
