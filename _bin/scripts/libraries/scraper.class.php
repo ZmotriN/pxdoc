@@ -106,6 +106,7 @@ class Scraper
             }
         }
         
+        // print_r($metas);
         if(($results = $xpath->query('//meta[@name="dc.title"]')) && $results->length) $metas->title = $results->item(0)->getAttribute('content');
         if(($results = $xpath->query('//meta[@name="dcterms.title"]')) && $results->length) $metas->title = $results->item(0)->getAttribute('content');
         if(($results = $xpath->query('//meta[@name="twitter:title"]')) && $results->length) $metas->title = $results->item(0)->getAttribute('content');
@@ -124,7 +125,7 @@ class Scraper
         if(($results = $xpath->query('//meta[@property="og:site_name"]')) && $results->length) $metas->label = $results->item(0)->getAttribute('content');
         if(($results = $xpath->query('//shreddit-title')) && $results->length) $metas->title = $results->item(0)->getAttribute('title');
 
-
+// print_r($metas);
         
         if(empty($metas->label)) {
             if(($results = $xpath->query('//link[@rel="manifest" and @href]')) && $results->length) {
@@ -165,7 +166,7 @@ class Scraper
             }
         }
         
-
+// print_r($metas);
         if(empty($metas->label) && ($results = $xpath->query('//meta[@property="article:author"]')) && $results->length) $metas->label = $results->item(0)->getAttribute('content');
         if(empty($metas->label) && ($results = $xpath->query('//meta[@name="author"]')) && $results->length) $metas->label = $results->item(0)->getAttribute('content');
         if(empty($metas->label) && ($results = $xpath->query('//meta[@name="twitter:creator"]')) && $results->length) $metas->label = $results->item(0)->getAttribute('content');
@@ -233,6 +234,8 @@ class Scraper
         $metas->title = trim(current(explode(' — ', current(explode(' - ', current(explode(' | ', $metas->title)))))));
         $metas->label = preg_replace('#^www\.#i', '', trim(current(explode(' — ', current(explode(' - ', current(explode(' | ', $metas->label))))))));
         $metas->description = trim($metas->description);
+
+        
         return $metas;
         return empty($metas->title) ? false : $metas;
     }
@@ -247,12 +250,13 @@ class Scraper
 
 
 	private static function loadHTML($contents) {
-        $encoding = mb_detect_encoding($contents, 'UTF-8, ISO-8859-1, ISO-8859-15', true);
+        $encoding = mb_detect_encoding($contents, 'UTF-8, ISO-8859-15, ISO-8859-1', true);
         if ($encoding !== 'UTF-8') $contents = mb_convert_encoding($contents, 'UTF-8', $encoding);
+        $contents = preg_replace('/<head[^>]*>/i', '$0<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">', $contents, 1);
 		$dom = new DomDocument('1.0', 'UTF-8');
 		$dom->preserveWhiteSpace = false;
 		@$dom->loadHTML($contents);
-		return new DOMXpath($dom);
+        return new DOMXpath($dom);
 	}
 
 

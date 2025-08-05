@@ -299,8 +299,10 @@ function cropimage($img, $w, $h)
 function html_entities_decode($str) {
     // $str = html_entity_decode(trim($str), ENT_QUOTES, 'UTF-8');
     // $str = htmlentities($str, ENT_QUOTES, 'UTF-8');
-    // $str = mb_convert_encoding($str, 'HTML-ENTITIES', 'UTF-8');
-    $str = html_entity_decode(trim($str), ENT_QUOTES, 'UTF-8');
+    $str = @mb_convert_encoding($str, 'HTML-ENTITIES', 'UTF-8');
+    // echo $str.RN;
+    // echo mb_detect_encoding($str, 'UTF-8, ISO-8859-15, ISO-8859-1', true).RN;
+    // $str = html_entity_decode(trim($str), ENT_QUOTES, 'UTF-8');
     // $str = htmlentities($str, ENT_QUOTES, 'UTF-8');
     return $str;
 }
