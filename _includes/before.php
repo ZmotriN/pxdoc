@@ -20,7 +20,7 @@ $PAGE->favicon = get_relative_path($PAGE->file, $PAGE->root . $PAGE->favicon);
 $ogtags = new stdClass;
 $ogtags->image = $image;
 $ogtags->title = strip_tags($PAGE->title) . ' | ' . $PAGE->project;
-$ogtags->description  = htmlentities(html_entity_decode(strip_tags(trim($PAGE->abstract)), ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
+$ogtags->description  = htmlentities(html_entity_decode(strip_tags(trim(empty($PAGE->abstract) ? '' : $PAGE->abstract)), ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
 $ogtags->url = str_replace($root, $PAGE->baseurl, str_replace('\\', '/', pathinfo($PAGE->file, PATHINFO_DIRNAME) . '/'));
 $PAGE->ogtags = $ogtags;
 

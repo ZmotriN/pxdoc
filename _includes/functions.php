@@ -127,13 +127,14 @@ function print_children($parent=null, $return=false) {
     $str = '';
     if(!$parent) $parent = current(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,1))['file'];
     foreach(get_children($parent) as $child) {
+        $abstract = empty($child->abstract) ? '' : $child->abstract;
         $icon = $child->href . $child->icon;
         $str .= <<<EOD
                         <div class="list-grid__item">
                             <div class="list-grid__item__icon" style="background-image: url({$icon});"></div>
                             <div class="list-grid__item__description">
                                 <span class="list-grid__item__title"><a href="{$child->href}">{$child->title}</a></span>
-                                <span class="list-grid__item__abstract">{$child->abstract}</span>
+                                <span class="list-grid__item__abstract">{$abstract}</span>
                             </div>
                         </div>
 
