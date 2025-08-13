@@ -15,7 +15,7 @@ if($PAGE->image) {
     }
 }
 
-$PAGE->favicon = get_relative_path($PAGE->file, $PAGE->root . $PAGE->favicon);
+$favicon = get_relative_path($PAGE->file, $PAGE->root . $PAGE->favicon);
 
 $ogtags = new stdClass;
 $ogtags->image = $image;

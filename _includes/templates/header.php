@@ -22,7 +22,7 @@
         <meta property="og:description" content="<?php echo $PAGE->ogtags->description; ?>">
         <meta property="og:url" content="<?php echo $PAGE->ogtags->url; ?>">
         <meta property="og:image" content="<?php echo $PAGE->ogtags->image; ?>">
-        <link rel="icon" type="image/x-icon" href="<?php echo $PAGE->favicon; ?>">
+        <link rel="icon" type="image/x-icon" href="<?php echo $favicon; ?>">
         <?php foreach($styles as $cssfile): ?><link rel="stylesheet" href="<?php echo $cssfile; ?>">
         <?php endforeach;?><script>const shared = '<?php echo $PAGE->shared; ?>';</script>
         <script>const root = '<?php echo $PAGE->rooturl; ?>';</script>
