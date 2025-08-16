@@ -10,7 +10,7 @@ const inputFiles = [
     '../../jscripts/highlight.min.js',
     '../../jscripts/swiper-bundle.min.js',
     '../../jscripts/vue.global.prod.js',
-    '../../jscripts/pxdoc.min.js'
+    '../../jscripts/pxdoc.js'
 ].map(file => path.join(scriptDir, file));
 
 const bannerFile = path.join(scriptDir, 'banner.txt');
