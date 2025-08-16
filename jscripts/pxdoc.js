@@ -46,7 +46,7 @@ HTMLElement.prototype.create = function(tag, classname=null, content=null) {
 /******************************************************
  *                        Query                       *
  ******************************************************/
-const query = (selector, all = false) => {
+self.query = (selector, all = false) => {
     if (all) return document.querySelectorAll(selector);
     else return document.querySelector(selector);
 };
@@ -55,7 +55,7 @@ const query = (selector, all = false) => {
 /******************************************************
  *                        Ready                       *
  ******************************************************/
-const ready = evt => {
+self.ready = evt => {
     document.addEventListener('DOMContentLoaded', e => {
         evt(e);
     });
@@ -65,7 +65,7 @@ const ready = evt => {
 /******************************************************
  *                        Sleep                       *
  ******************************************************/
-const sleep = ms => {
+self.sleep = ms => {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
