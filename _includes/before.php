@@ -33,10 +33,6 @@ foreach($pstyles as $cssfile) {
     $styles[] = get_relative_path($PAGE->file, $cssfile);
 }
 
-// $scripts[] = $PAGE->shared . 'jscripts/highlight.min.js';
-// $scripts[] = $PAGE->shared . 'jscripts/swiper-bundle.min.js';
-// $scripts[] = $PAGE->shared . 'jscripts/vue.global.prod.js';
-// $scripts[] = $PAGE->shared . 'jscripts/pxdoc.min.js';
 $scripts[] = $PAGE->shared . 'jscripts/bundle.min.js';
 $pscripts = $PAGE->scripts;
 if(empty($pscripts)) $pscripts = [];

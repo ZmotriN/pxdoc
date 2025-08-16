@@ -39,7 +39,7 @@ $color_red_hex: unquote('#{str-slice(ie-hex-str($color_red), 4)}');
     
     --logo: url(../images/logo.svg);
     --font: "Rubik", sans-serif;
-    --font-monospace: "Inconsolata", monospace;
+    --font-monospace: "Consolas";
     --font-size-base: 18px;
     --font-size-resp: 4vw;
     

@@ -47,6 +47,7 @@ try {
 esbuild.build({
     legalComments: 'none',
     entryPoints: [tempFile],
+    treeShaking: true,
     outfile: outputFile,
     bundle: false,
     minify: true,
