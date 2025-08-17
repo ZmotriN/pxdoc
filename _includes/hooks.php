@@ -64,7 +64,6 @@ register_hook('pre_render', function($contents) {
 });
 
 
-
 /******************************************************
  *                Composante Exercice                 *
  ******************************************************/
@@ -273,24 +272,16 @@ register_tag('boxlink', function($html, $attrs, $data) {
 
     if(is_url($attrs['href'])) {
         if(strpos($attrs['href'], '#') !== false) list($attrs['href'], $anchor) = explode('#', $attrs['href']);
-
         try {
             if(!$metas = Scraper::get($attrs['href'])) throw new Exception("Can't scrape meta informations.");
-            // print_r($metas);
-// echo mb_detect_encoding($metas->description, 'UTF-8, ISO-8859-15, ISO-8859-1', true).RN;
-
-// echo mb_check_encoding($metas->description, 'UTF-8').RN;
             if(empty($metas->image)) throw new Exception("No thumbnail image found.");
             $destimg = pathinfo($this->file, PATHINFO_DIRNAME) . '/images/' . 'thumb_' . shorthash($metas->image) . IMG_EXT;
             if(!is_file($destimg)) {
-                // print_r($metas);
-                
                 if(!is_dir(pathinfo($destimg, PATHINFO_DIRNAME)) && !@mkdir(pathinfo($destimg, PATHINFO_DIRNAME)))
                     throw new Exception("Can't create subfolder: " . pathinfo($destimg, PATHINFO_DIRNAME));
                 if(!$destimg = Media::downloadImage($metas->image, $destimg, 480, 252))
                     throw new Exception("Can't download thumbnail.");
             }
-
             $url = $metas->url . (isset($anchor) ? '#' . $anchor : '');
             $title = $metas->title;
             $abstract = $metas->description;
