@@ -7,8 +7,8 @@ const scriptDir = __dirname;
 
 // === CONFIGURATION (relatif au script) ===
 const inputFiles = [
-    '../../jscripts/highlight.min.js',
-    '../../jscripts/swiper-bundle.min.js',
+    // '../../jscripts/highlight.min.js',
+    // '../../jscripts/swiper-bundle.min.js',
     '../../jscripts/vue.global.prod.js',
     '../../jscripts/pxdoc.js'
 ].map(file => path.join(scriptDir, file));
