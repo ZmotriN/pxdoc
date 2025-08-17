@@ -13,6 +13,7 @@ final class PXPros
     private $vars = [];
     private $tags = [];
     private $hooks = [];
+    private $plugins = [];
 
 
     /**
@@ -43,6 +44,8 @@ final class PXPros
         switch ($name) {
             case 'root':
                 return $this->root;
+            case 'plugins':
+                return $this->plugins;
             case 'file':
                 return $this->file;
             default:
@@ -95,6 +98,8 @@ final class PXPros
         $this->page = php_file_info($file);
         $target = $dir . ltrim(pathinfo($file, PATHINFO_FILENAME), '_') . '.html';
         $this->file = realpath($file);
+        $this->plugins = [];
+        $this->processHook('pre_render', file_get_contents($file));
         ob_start();
         if ($this->before) include(realpath($this->root . $this->before));
         include($file);
@@ -198,5 +203,8 @@ final class PXPros
         return $abs ? $shared . S : get_relative_path($path, $shared);
     }
 
+    public function addPlugin($file) {
+        array_push($this->plugins, $file);
+    }
 
 }

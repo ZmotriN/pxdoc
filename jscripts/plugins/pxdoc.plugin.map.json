@@ -1,0 +1,19 @@
+[
+    {
+        "name": "highlight",
+        "tags": [
+            "highlight"
+        ],
+        "version": "11.11.1",
+        "file": "highlight.plugin.min.js"
+    },
+    {
+        "name": "swiper",
+        "tags": [
+            "gallery",
+            "swiper"
+        ],
+        "version": "11.2.10",
+        "file": "swiper.plugin.min.js"
+    }
+]

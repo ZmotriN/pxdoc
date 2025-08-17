@@ -50,6 +50,22 @@ register_page_type('wiki', [
 
 
 /******************************************************
+ *                  Register Plugins                  *
+ ******************************************************/
+register_hook('pre_render', function($contents) {
+    $map = json_decode(file_get_contents(realpath(__DIR__ . '/../jscripts/plugins/pxdoc.plugin.map.json')));
+    foreach($map as $plugin) {
+        foreach($plugin->tags as $tag) {
+            if(preg_match('#<' . preg_quote($tag, '#') . '([^>]*)>(.*?)</' . preg_quote($tag, '#') . '>#msi', $contents)) {
+                $this->addPlugin($plugin->file);
+            }
+        }
+    }
+});
+
+
+
+/******************************************************
  *                Composante Exercice                 *
  ******************************************************/
 register_tag('exercice', function($html, $attrs, $data) {

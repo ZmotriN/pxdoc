@@ -183,6 +183,23 @@ function php_file_info($file)
 }
 
 
+
+/**
+ * Method js_file_info
+ *
+ * @param string $file JS Filepath
+ *
+ * @return void
+ */
+function js_file_info(string $file) {
+    $contents = file_get_contents($file);
+    if(!preg_match('#^(/\*\!.*?\*/)#msi', $contents, $block)) return new stdClass;
+    if (!preg_match_all('#@([a-z0-9]+)[\s\t]+([^\n]+)#msi', $block[1], $m)) return new stdClass;
+    foreach ($m[1] as $k => $v) $info[trim($v)] = trim($m[2][$k]);
+    return (object)$info ?? new stdClass;
+}
+
+
 /**
  * Recursevly walk a folder and yield files corresponding to the pattern
  *

@@ -34,7 +34,11 @@ foreach($pstyles as $cssfile) {
 }
 
 $scripts[] = $PAGE->shared . 'jscripts/pxdoc.core.min.js';
-// insert plugins here
+
+foreach(array_unique($PAGE->plugins) as $plugin) {
+    $scripts[] = $PAGE->shared . 'jscripts/plugins/' . $plugin;
+}
+
 $pscripts = $PAGE->scripts;
 if(empty($pscripts)) $pscripts = [];
 if(is_string($pscripts)) $pscripts = [$pscripts];

@@ -1,0 +1,1 @@
+@"%~dp0..\..\..\node_modules\.bin\php-bulk" "%~dp0..\scripts\pxmap.php" %1
