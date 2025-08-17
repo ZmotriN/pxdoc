@@ -33,7 +33,8 @@ foreach($pstyles as $cssfile) {
     $styles[] = get_relative_path($PAGE->file, $cssfile);
 }
 
-$scripts[] = $PAGE->shared . 'jscripts/bundle.min.js';
+$scripts[] = $PAGE->shared . 'jscripts/pxdoc.core.min.js';
+// insert plugins here
 $pscripts = $PAGE->scripts;
 if(empty($pscripts)) $pscripts = [];
 if(is_string($pscripts)) $pscripts = [$pscripts];
