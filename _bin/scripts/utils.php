@@ -48,7 +48,7 @@ function where($file)
 
 function err($str)
 {
-    echo 'Error: ' . $str . RN;
+    file_put_contents('php://stderr', 'Error: ' . $str . RN, FILE_APPEND);
     exit(1);
 }
 
