@@ -103,7 +103,7 @@ function gcd_reduce($a, $b)
  *
  * @param  mixed $from
  * @param  mixed $to
- * @return void
+ * @return string
  */
 function get_relative_path($from, $to)
 {
@@ -482,6 +482,57 @@ function set_default_timezone(bool $force = false)
     if(empty($info->timezone)) return false;
     if(empty($info->timezone->id)) return false;
     return date_default_timezone_set($info->timezone->id);
+}
+
+
+function delete_path(string $path, bool $keepRoot = false): void
+{
+    if ($path === '' || !file_exists($path)) {
+        return; // rien à faire
+    }
+
+    // Fichier ou lien symbolique -> unlink direct
+    if (is_file($path) || is_link($path)) {
+        @chmod($path, 0666);           // utile sous Windows si "read-only"
+        if (!@unlink($path)) {
+            throw new RuntimeException("Impossible de supprimer le fichier: $path");
+        }
+        return;
+    }
+
+    if (!is_dir($path)) {
+        // Ni fichier ni dossier (cas rare) : on s'arrête
+        return;
+    }
+
+    $it = new RecursiveDirectoryIterator(
+        $path,
+        FilesystemIterator::SKIP_DOTS
+            | FilesystemIterator::CURRENT_AS_FILEINFO
+    );
+    $rit = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
+
+    /** @var SplFileInfo $info */
+    foreach ($rit as $info) {
+        $p = $info->getPathname();
+
+        if ($info->isLink() || $info->isFile()) {
+            @chmod($p, 0666);
+            if (!@unlink($p)) {
+                throw new RuntimeException("Impossible de supprimer le fichier: $p");
+            }
+        } elseif ($info->isDir()) {
+            if (!@rmdir($p)) {
+                throw new RuntimeException("Impossible de supprimer le dossier: $p");
+            }
+        }
+    }
+
+    if (!$keepRoot) {
+        if (!@rmdir($path)) {
+            throw new RuntimeException("Impossible de supprimer le dossier racine: $path");
+        }
+    }
 }
 
 
