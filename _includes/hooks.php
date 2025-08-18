@@ -275,7 +275,7 @@ register_tag('boxlink', function($html, $attrs, $data) {
         try {
             if(!$metas = Scraper::get($attrs['href'])) throw new Exception("Can't scrape meta informations.");
             if(empty($metas->image)) throw new Exception("No thumbnail image found.");
-            $destimg = pathinfo($this->file, PATHINFO_DIRNAME) . '/images/' . 'thumb_' . shorthash($metas->image) . IMG_EXT;
+            $destimg = pathinfo($this->file, PATHINFO_DIRNAME) . '/images/' . 'thumb_' . shorthash($metas->image) . '.webp';
             if(!is_file($destimg)) {
                 if(!is_dir(pathinfo($destimg, PATHINFO_DIRNAME)) && !@mkdir(pathinfo($destimg, PATHINFO_DIRNAME)))
                     throw new Exception("Can't create subfolder: " . pathinfo($destimg, PATHINFO_DIRNAME));

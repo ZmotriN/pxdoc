@@ -1,15 +1,29 @@
 <?php
 
-const BR = '<br>';
 const RN = "\r\n";
+const BR = '<br>';
 const S = '/';
 
+spl_autoload_register(function ($class) {
+    static $catalog = [
+        'Cache'   => 'cache.class.php',
+        'Media'   => 'media.class.php',
+        'PXPros'  => 'pxpros.class.php',
+        'Scraper' => 'scraper.class.php',
+    ];
+    if (isset($catalog[$class])) require_once(__DIR__ . '/libraries/' . $catalog[$class]);
+}, true, true);
 
-define('IMAGICK_SUPPORT', extension_loaded('imagick'));
-define('GD_SUPPORT', extension_loaded('gd'));
-define('WEBP_SUPPORT', IMAGICK_SUPPORT || function_exists('imagewebp'));
-define('IMG_EXT', WEBP_SUPPORT ? '.webp' : '.jpg');
-define('MODULES_PATH', realpath(__DIR__ . '/../../../node_modules/.bin').S);
+set_default_timezone();
+define('MODULES_PATH', get_node_modules_path());
+
+
+function get_node_modules_path() {
+    if($path = Cache::get('node_modules_path')) return $path;
+    $path = trim(`npm root`) . '/.bin/';
+    Cache::set('node_modules_path', $path);
+    return $path;
+}
 
 
 function where($file)
@@ -501,14 +515,3 @@ function register_hook($name, $clb)
 }
 
 
-spl_autoload_register(function ($class) {
-    static $catalog = [
-        'Cache'   => 'cache.class.php',
-        'Media'   => 'media.class.php',
-        'PXPros'  => 'pxpros.class.php',
-        'Scraper' => 'scraper.class.php',
-    ];
-    if (isset($catalog[$class])) require_once(__DIR__ . '/libraries/' . $catalog[$class]);
-}, true, true);
-
-set_default_timezone();

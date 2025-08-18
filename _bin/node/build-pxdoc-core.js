@@ -6,9 +6,7 @@ const vue = require('vue/package.json');
 
 // --> Set path constants
 const scriptDir = __dirname;
-const worktDir = path.join(scriptDir, '../../../');
-const vueDir = path.join(worktDir, 'node_modules/vue/');
-const vueFile = path.join(vueDir, 'dist/vue.global.prod.js')
+const vueFile = require.resolve('vue/dist/vue.global.prod.js');
 const pxdocFile = path.join(scriptDir, '../../jscripts/pxdoc.core.js');
 const outputFile = path.join(scriptDir, '../../jscripts/pxdoc.core.min.js');
 

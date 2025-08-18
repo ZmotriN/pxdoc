@@ -1,1 +1,1 @@
-@"%~dp0..\..\..\node_modules\.bin\php-bulk" "%~dp0..\scripts\pxtune.php" %1
+@"php-bulk" "%~dp0..\scripts\pxtune.php" %1
