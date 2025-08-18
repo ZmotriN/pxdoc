@@ -3,7 +3,7 @@
 final class PXPros
 {
 
-    const SEED_FILE = '_pxpros.json';
+    const SEED_FILE = '_pxdoc.json';
 
 
     private $root;
