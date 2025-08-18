@@ -37,6 +37,6 @@ foreach($rit as $file) {
     if(!is_dir($destDir) && !@mkdir($destDir, 0777, true)) err("Can't create dir: ". $destDir);
     if(!@copy($file, $destPath)) err("Can't copy file: " . $path);
     
-    echo "COPY: " . $path . RN;
+    echo "Copy: " . $path . RN;
 }
 
