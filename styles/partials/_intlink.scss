@@ -27,6 +27,10 @@
         background-size: 38px 38px;
         background-position: 50% 50%;
         */
+
+        &[style*=".svg"] {
+            border-radius: unset;
+        }
     }
 
     &__description {

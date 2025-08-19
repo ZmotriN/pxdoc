@@ -24,21 +24,22 @@
     }   
 
     &__linkcopied {
-        line-height: 7vw;
-        margin-left: 20px;
+        font-size: 0.7rem;
+        // line-height: 7vw;
+        margin-left: 0.5rem;
         opacity: 0%;
         display: none;
 
         @media (min-width: 576px) {
-            line-height: 36px;
+            // line-height: 36px;
             display: block;
         }
     }
 
     &__chain {
         transition-duration: 200ms;
-        height: 24px;
-        width: 24px;
+        height: 1.5rem;
+        width: 1.5rem;
         padding: 2px;
 
         text-align: center;
@@ -49,11 +50,11 @@
 
         flex-shrink: 0;
 
-        @media (min-width: 576px) {
-            height: 36px;
-            width: 36px;
-            padding: 4px;
-        }
+        // @media (min-width: 576px) {
+        //     height: 36px;
+        //     width: 36px;
+        //     padding: 4px;
+        // }
 
         &:hover {
             cursor: pointer;

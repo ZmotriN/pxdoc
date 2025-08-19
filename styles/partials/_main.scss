@@ -2,11 +2,11 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: var(--font);
 }
 
 html {
     scroll-behavior: smooth;
-    font-family: var(--font);
     font-size: min(var(--font-size-resp), var(--font-size-base));
 }
 
@@ -23,6 +23,11 @@ body {
         flex-direction: column;
     }
 
+}
+
+
+input {
+    font-size: 1rem;
 }
 
 span.inline-code {
