@@ -4,19 +4,6 @@ const RN = "\r\n";
 const BR = '<br>';
 const S = '/';
 
-spl_autoload_register(function ($class) {
-    static $catalog = [
-        'Cache'   => 'cache.class.php',
-        'Media'   => 'media.class.php',
-        'PXPros'  => 'pxpros.class.php',
-        'Scraper' => 'scraper.class.php',
-    ];
-    if (isset($catalog[$class])) require_once(__DIR__ . '/libraries/' . $catalog[$class]);
-}, true, true);
-
-set_default_timezone();
-define('MODULES_PATH', get_node_modules_path());
-
 
 function get_node_modules_path() {
     if($path = Cache::get('node_modules_path')) return $path;
@@ -301,7 +288,6 @@ function curl_get_contents($file, $dest = null, $clb = null)
     }
     $results = curl_exec($chnd);
     $info = curl_getinfo($chnd);
-    // print_r($info);
     curl_close($chnd);
     if (!empty($fhnd)) fclose($fhnd);
     if (!in_array($info['http_code'], [200, 201])) $results = false;
@@ -566,3 +552,17 @@ function register_hook($name, $clb)
 }
 
 
+spl_autoload_register(function ($class) {
+    static $catalog = [
+        'Cache'   => 'cache.class.php',
+        'Media'   => 'media.class.php',
+        'oEmbed'  => 'oembed.class.php',
+        'PXPros'  => 'pxpros.class.php',
+        'Scraper' => 'scraper.class.php',
+    ];
+    if (isset($catalog[$class])) require_once(__DIR__ . '/libraries/' . $catalog[$class]);
+}, true, true);
+
+
+set_default_timezone();
+define('MODULES_PATH', get_node_modules_path());
