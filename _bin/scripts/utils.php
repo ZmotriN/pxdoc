@@ -555,6 +555,7 @@ function register_hook($name, $clb)
 spl_autoload_register(function ($class) {
     static $catalog = [
         'Cache'   => 'cache.class.php',
+        'JSON5'   => 'json5.class.php',
         'Media'   => 'media.class.php',
         'oEmbed'  => 'oembed.class.php',
         'PXPros'  => 'pxpros.class.php',

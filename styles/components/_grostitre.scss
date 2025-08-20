@@ -38,9 +38,10 @@
 
     &__chain {
         transition-duration: 200ms;
-        height: 1.5rem;
-        width: 1.5rem;
-        padding: 2px;
+        height: 1.7rem;
+        width: 1.7rem;
+        // aspect-ratio: 1/1;
+        padding: 0.2rem;
 
         text-align: center;
         vertical-align: center;
