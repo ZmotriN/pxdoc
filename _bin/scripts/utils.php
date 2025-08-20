@@ -3,7 +3,8 @@
 const RN = "\r\n";
 const BR = '<br>';
 const S = '/';
-
+const R = "\r";
+const N = "\n";
 
 function get_node_modules_path() {
     if($path = Cache::get('node_modules_path')) return $path;
@@ -247,7 +248,7 @@ function curl_get_contents($file, $dest = null, $clb = null)
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_SSL_VERIFYHOST => false,
         CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_TIMEOUT        => 60,
+        CURLOPT_TIMEOUT        => 3600,
         CURLOPT_CONNECTTIMEOUT => 10,
         CURLOPT_ENCODING       => 'gzip,deflate',
         CURLOPT_NOPROGRESS     => ($clb ? false : true),
