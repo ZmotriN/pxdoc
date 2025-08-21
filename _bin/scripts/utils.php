@@ -566,6 +566,14 @@ function unzip($zipfile, $dest, $subdir = '')
 
 
 
+function str_normalize($str) {
+    $txt = Normalizer::normalize($str, Normalizer::FORM_D);
+    $txt = preg_replace('/[\x{0300}-\x{036f}]+/u', '', $txt);
+    return $txt;
+}
+
+
+
 /**
  * register_tag
  *

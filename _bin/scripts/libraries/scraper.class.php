@@ -8,6 +8,32 @@
 class Scraper
 {
 
+    private $url;
+    private $contents;
+    private $xpath;
+
+    public function __construct($url) {
+        $this->url = $url;
+        if(!is_url($this->url)) throw new Exception("URL is not valid.");
+        if(!$this->contents = self::getContents($this->url)) throw new Exception("URL crawling seems to have been block.");
+        if(!$this->xpath = self::loadHTML($this->contents)) throw new Exception("Can't parse server response.");
+    }
+
+
+    public function __get($key) {
+        switch($key) {
+            case 'contents': return $this->contents;
+            case 'xpath': return $this->xpath;
+        }
+    }
+
+
+    public function query($query) {
+        return $this->xpath->query($query);
+    }
+
+
+
     private static function scrape($url) {
         if(!is_url($url)) throw new Exception("Url is not valid.");
         if(!$contents = self::getContents($url)) throw new Exception("Url crawling seems to have been block.");
@@ -261,9 +287,9 @@ class Scraper
 
 
     public static function get($url) {
-        // if(($metas = Cache::get(($key = 'metas_' . shorthash($url)))) !== null) return $metas;
+        if(($metas = Cache::get(($key = 'metas_' . shorthash($url)))) !== null) return $metas;
         if(!$metas = self::scrape($url)) throw new Exception("Can't crawl Url.");
-        $key = 'metas_' . shorthash($url);
+        // $key = 'metas_' . shorthash($url);
         Cache::set($key, $metas);
         // print_r($metas);
         return $metas;
