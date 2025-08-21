@@ -524,6 +524,47 @@ function delete_path(string $path, bool $keepRoot = false): void
 
 
 
+function unzip($zipfile, $dest, $subdir = '')
+{
+    $zip = new ZipArchive;
+    if ($zip->open($zipfile) === TRUE) {
+        $subdir = ltrim(rtrim($subdir, '/'), '/'); // nettoie le paramètre
+        $prefix = $subdir !== '' ? $subdir . '/' : '';
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+            $name = $stat['name'];
+
+            // si on a défini un sous-dossier → filtre
+            if ($prefix === '' || strpos($name, $prefix) === 0) {
+                // chemin relatif dans l’archive
+                $relativePath = $prefix !== '' ? substr($name, strlen($prefix)) : $name;
+
+                if ($relativePath === '') {
+                    continue; // ignore le dossier lui-même
+                }
+
+                $targetPath = rtrim($dest, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $relativePath;
+
+                // Créer les dossiers si besoin
+                if (substr($name, -1) === '/') {
+                    @mkdir($targetPath, 0777, true);
+                } else {
+                    @mkdir(dirname($targetPath), 0777, true);
+                    copy("zip://".$zipfile."#".$name, $targetPath);
+                }
+            }
+        }
+
+        $zip->close();
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+
 
 /**
  * register_tag
