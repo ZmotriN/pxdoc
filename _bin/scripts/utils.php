@@ -565,6 +565,96 @@ function unzip($zipfile, $dest, $subdir = '')
 
 
 
+function unzip_flat(string $zipfile, string $destDir, array $patterns = ['*']): array
+{
+    // Crée le dossier de destination s’il n’existe pas
+    if (!is_dir($destDir)) {
+        if (file_exists($destDir) && !is_dir($destDir)) {
+            throw new RuntimeException("Le chemin de destination existe mais n'est pas un dossier: $destDir");
+        }
+        if (!@mkdir($destDir, 0777, true) && !is_dir($destDir)) {
+            throw new RuntimeException("Impossible de créer le dossier: $destDir");
+        }
+    }
+
+    $zip = new ZipArchive();
+    $openResult = $zip->open($zipfile);
+    if ($openResult !== true) {
+        throw new RuntimeException("Impossible d'ouvrir le ZIP ($zipfile), code: $openResult");
+    }
+
+    // Fallback au cas où fnmatch n’est pas dispo
+    $matchFn = function (string $filename) use ($patterns): bool {
+        $base = basename($filename);
+
+        if (function_exists('fnmatch')) {
+            $flags = defined('FNM_CASEFOLD') ? FNM_CASEFOLD : 0; // insensible à la casse
+            foreach ($patterns as $p) {
+                if (fnmatch($p, $base, $flags)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Émulation simple de fnmatch via regex
+        foreach ($patterns as $p) {
+            $regex = '#^' . str_replace(['\*', '\?'], ['.*', '.'], preg_quote($p, '#')) . '$#i';
+            if (preg_match($regex, $base)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    $extracted = [];
+    $destDir = rtrim($destDir, DIRECTORY_SEPARATOR);
+
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $inZipPath = $zip->getNameIndex($i);
+        if ($inZipPath === null) {
+            continue;
+        }
+        // Ignore les répertoires dans le ZIP
+        if (substr($inZipPath, -1) === '/') {
+            continue;
+        }
+
+        // Filtrage par wildcards sur le basename seulement
+        if (!$matchFn($inZipPath)) {
+            continue;
+        }
+
+        $base = basename($inZipPath);
+        $outPath = $destDir . DIRECTORY_SEPARATOR . $base;
+
+        // Lit le fichier via un flux pour éviter de charger en mémoire
+        $in = $zip->getStream($inZipPath);
+        if ($in === false) {
+            // entrée corrompue/illisible — on passe
+            continue;
+        }
+
+        $out = @fopen($outPath, 'wb'); // 'wb' écrase si existe
+        if ($out === false) {
+            fclose($in);
+            // Impossible d’écrire ce fichier — on passe
+            continue;
+        }
+
+        stream_copy_to_stream($in, $out);
+        fclose($in);
+        fclose($out);
+
+        $extracted[] = $outPath;
+    }
+
+    $zip->close();
+    return $extracted;
+}
+
+
+
 
 function str_normalize($str) {
     $txt = Normalizer::normalize($str, Normalizer::FORM_D);
@@ -604,12 +694,13 @@ function register_hook($name, $clb)
 
 spl_autoload_register(function ($class) {
     static $catalog = [
-        'Cache'   => 'cache.class.php',
-        'JSON5'   => 'json5.class.php',
-        'Media'   => 'media.class.php',
-        'oEmbed'  => 'oembed.class.php',
-        'PXPros'  => 'pxpros.class.php',
-        'Scraper' => 'scraper.class.php',
+        'Cache'    => 'cache.class.php',
+        'Geomatic' => 'geomatic.class.php',
+        'JSON5'    => 'json5.class.php',
+        'Media'    => 'media.class.php',
+        'oEmbed'   => 'oembed.class.php',
+        'PXPros'   => 'pxpros.class.php',
+        'Scraper'  => 'scraper.class.php',
     ];
     if (isset($catalog[$class])) require_once(__DIR__ . '/libraries/' . $catalog[$class]);
 }, true, true);
