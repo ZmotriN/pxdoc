@@ -663,6 +663,11 @@ function str_normalize($str) {
 }
 
 
+function trim_nbsp(string $s): string {
+    // Retire blancs ASCII + bytes de NBSP UTF-8 (C2,A0) + NBSP Latin-1 (A0)
+    return trim($s, " \t\n\r\0\x0B\xC2\xA0\xA0");
+}
+
 
 /**
  * register_tag
