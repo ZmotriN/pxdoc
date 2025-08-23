@@ -694,13 +694,14 @@ function register_hook($name, $clb)
 
 spl_autoload_register(function ($class) {
     static $catalog = [
-        'Cache'    => 'cache.class.php',
-        'Geomatic' => 'geomatic.class.php',
-        'JSON5'    => 'json5.class.php',
-        'Media'    => 'media.class.php',
-        'oEmbed'   => 'oembed.class.php',
-        'PXPros'   => 'pxpros.class.php',
-        'Scraper'  => 'scraper.class.php',
+        'Cache'        => 'cache.class.php',
+        'FeatureOrder' => 'featureorder.class.php',
+        'Geomatic'     => 'geomatic.class.php',
+        'JSON5'        => 'json5.class.php',
+        'Media'        => 'media.class.php',
+        'oEmbed'       => 'oembed.class.php',
+        'PXPros'       => 'pxpros.class.php',
+        'Scraper'      => 'scraper.class.php',
     ];
     if (isset($catalog[$class])) require_once(__DIR__ . '/libraries/' . $catalog[$class]);
 }, true, true);
