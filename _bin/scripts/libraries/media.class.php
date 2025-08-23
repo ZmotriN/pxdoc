@@ -102,8 +102,8 @@ class Media
         if(!url_exists($url, '^image/')) throw new Exception("Image crawling seems to have been block.");
         if(!$contents = curl_get_contents($url)) throw new Exception("Can't download thumbnail image.");
         if(!$img = @imagecreatefromstring($contents)) throw new Exception("Invalid thumbnail image.");
-        if (!$thumb = cropimage($img, $width, $height)) throw new Exception("Can't crop thumbnail image.");
-        if (!imagewebp($thumb, $dest, 60)) throw new Exception("Can't save thumbnail image.");
+        if(!$thumb = cropimage($img, $width, $height)) throw new Exception("Can't crop thumbnail image.");
+        if(!imagewebp($thumb, $dest, 60)) throw new Exception("Can't save thumbnail image.");
         imagedestroy($img);
         imagedestroy($thumb);
         return realpath($dest);
