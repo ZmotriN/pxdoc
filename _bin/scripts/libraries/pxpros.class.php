@@ -180,11 +180,31 @@ final class PXPros
     {
         if (is_file($path)) $path = pathinfo(realpath($path), PATHINFO_DIRNAME);
         elseif (!$path = realpath($path)) return false;
+        $recPath = $path;
+
         do {
             $file = $path . S . self::SEED_FILE;
             if (is_file($file)) return realpath($file);
             $path = pathinfo($path, PATHINFO_DIRNAME);
         } while ($path != pathinfo($path, PATHINFO_DIRNAME));
+        
+        
+        $ignoreDirs = ['.git', 'node_modules', 'vendor'];
+        $dir = new RecursiveDirectoryIterator($recPath, FilesystemIterator::SKIP_DOTS);
+        $filter = new RecursiveCallbackFilterIterator($dir, function (SplFileInfo $current) use ($ignoreDirs) {
+            if ($current->isDir()) {
+                return !in_array($current->getFilename(), $ignoreDirs, true);
+            }
+            return true;
+        });
+        $it = new RecursiveIteratorIterator($filter, RecursiveIteratorIterator::SELF_FIRST);
+        foreach ($it as $file) {
+            /** @var SplFileInfo $file */
+            if ($file->isFile() && $file->getFilename() === self::SEED_FILE) {
+                return $file->getRealPath();
+            }
+        }
+        
         return false;
     }
 
