@@ -669,6 +669,14 @@ function trim_nbsp(string $s): string {
 }
 
 
+function slug($k, $spacer = '-') {
+    $k = str_normalize($k);
+    $k = strtolower($k);
+    $k = preg_replace('#[^\w]+#i', $spacer, $k);
+    $k = trim($k, $spacer);
+    return $k;
+}
+
 /**
  * register_tag
  *
