@@ -329,6 +329,49 @@ const downloadJsonObject = (obj, filename) => {
 }
 
 
+
+self.saveJson = async function (obj, suggestedName = 'data.json') {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+
+    // Chromium : vrai "Enregistrer sous..."
+    if ('showSaveFilePicker' in window) {
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName,
+                types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
+            });
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            return true; // succès
+        } catch (err) {
+            if (err && (err.name === 'AbortError')) {
+                // utilisateur a cliqué "Annuler"
+                return false;
+            }
+            // autre erreur réelle
+            console.error('saveJson error:', err);
+            return false;
+        }
+    }
+
+    // Fallback universel (peut ne pas ouvrir la boîte, selon réglages)
+    try {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = suggestedName;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        return true;
+    } catch (err) {
+        console.error('saveJson fallback error:', err);
+        return false;
+    }
+}
+
 /******************************************************
  *            Highest common denominator              *
  ******************************************************/
