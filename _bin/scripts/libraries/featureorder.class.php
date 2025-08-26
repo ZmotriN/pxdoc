@@ -1,308 +1,237 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * FeatureOrder v2 — évite les voisins aux teintes trop proches.
+ *
+ * Usage:
+ *   $ids = FeatureOrder::orderIds($geojson, [
+ *     'idKeys' => ['id','code','fid','name'],
+ *     'avoidNeighbors' => true,   // par défaut true
+ *     'paletteSize' => 16,        // = count($palette)
+ *   ]);
+ */
 final class FeatureOrder
 {
     /**
-     * Point d'entrée.
-     * $geojson : chemin de fichier .geojson, string JSON, ou array décodé.
+     * $geojson : chemin .geojson, string JSON, ou array décodé.
      * $options :
-     *  - idKeys: string[] ordre des clés possibles pour trouver l'ID (dans feature.id puis properties[...])
-     *  - seed: 'barycenter'|'pair' (défaut 'barycenter')
-     *  - metric: 'haversine'|'euclid' (défaut 'haversine')
-     *  - step: int|null pas copremier pour la permutation (défaut null = auto ~phi)
+     *  - idKeys        : string[]
+     *  - seed          : 'barycenter'|'pair' (fallback farthest-first)
+     *  - metric        : 'haversine'|'euclid' (fallback)
+     *  - step          : int|null (fallback, permutation stride)
+     *  - avoidNeighbors: bool (DSATUR ON)             [def: true]
+     *  - paletteSize   : int  (nb couleurs palette)   [def: 16]
+     *  - adjacency     : 'bbox'|'none'                [def: 'bbox']
+     *  - bboxEps       : float marge BBox             [def: 1e-12]
      */
     public static function orderIds($geojson, array $options = []): array
     {
-        $fc = self::asFeatureCollection($geojson);
-        if (!isset($fc['features']) || !is_array($fc['features'])) return [];
+        $idKeys        = $options['idKeys']        ?? ['id','code','ID','fid','name'];
+        $seed          = $options['seed']          ?? 'barycenter';
+        $metric        = $options['metric']        ?? 'haversine';
+        $step          = $options['step']          ?? null;
+        $avoidNeighbors= $options['avoidNeighbors']?? true;
+        $paletteSize   = max(1, (int)($options['paletteSize'] ?? 16));
+        $adjacencyMode = $options['adjacency']     ?? 'bbox';
+        $bboxEps       = (float)($options['bboxEps'] ?? 1e-12);
 
-        $idKeys = $options['idKeys'] ?? ['id','ID','Id','IDUGD','ADIDU','PRIDU','NAME','name','code','Code'];
-        $seed   = $options['seed']   ?? 'barycenter';
-        $metric = $options['metric'] ?? 'haversine';
-        $step   = $options['step']   ?? null;
-
-        // 1) Extraire (id, lat, lng) depuis le GeoJSON
-        $items = []; // each: ['id'=>string, 'lat'=>float, 'lng'=>float]
-        foreach ($fc['features'] as $idx => $feat) {
-            $id = self::extractId($feat, $idKeys);
-            if ($id === null) $id = (string)$idx;
-
-            $centroid = self::featureCentroid($feat);
-            if ($centroid === null) continue;
-
-            $items[] = ['id' => $id, 'lat' => $centroid['lat'], 'lng' => $centroid['lng']];
-        }
-
+        $fc    = self::loadFeatureCollection($geojson);
+        $items = self::extractItems($fc, $idKeys);
         $n = count($items);
         if ($n === 0) return [];
         if ($n === 1) return [$items[0]['id']];
 
-        // 2) farthest-first (maximin) sur les centroïdes
-        $ffIdx = self::farthestFirstOrder($items, $metric, $seed); // indices 0..n-1
+        if ($avoidNeighbors && $adjacencyMode !== 'none') {
+            // 1) Adjacence par BBox
+            $neighbors  = self::neighborsFromBBoxes($items, $bboxEps);
+            // 2) Coloration DSATUR (indices 0..paletteSize-1)
+            $colorIndex = self::dsaturColoring($neighbors, $paletteSize);
+            // 3) Intercalage round-robin par classe de couleur pour respecter i % paletteSize
+            $ordered    = self::roundRobinByColor($colorIndex, $items);
+            return array_map(fn($it) => $it['id'], $ordered);
+        }
 
-        // 3) permutation "pas doré" pour alimenter une palette triée par hue
-        $perm = self::spreadIndices($n, $step);
-
-        // 4) projeter : le k-ième choisi va à la position permutée perm[k]
-        $out = array_fill(0, $n, null);
-        foreach ($ffIdx as $rank => $iFeature) {
+        // Fallback historique: farthest-first + permutation stride
+        $ffIdx = self::farthestFirstOrder($items, $metric, $seed);
+        $perm  = self::spreadIndices($n, $step);
+        $out   = array_fill(0, $n, null);
+        foreach ($ffIdx as $rank => $idx) {
             $pos = $perm[$rank];
-            $out[$pos] = $items[$iFeature]['id'];
+            $out[$pos] = $items[$idx]['id'];
         }
-
-        // (sécurité) combler trous improbables
-        for ($i = 0; $i < $n; $i++) if ($out[$i] === null) $out[$i] = $items[$i]['id'];
-
-        return $out; // IDs dans l'ordre: palette[i] -> featureId $out[i]
+        return $out;
     }
 
-    // ---------- GeoJSON utils ----------
+    /* ---------------- Parsing / Extraction ---------------- */
 
-    private static function asFeatureCollection($geojson): array
+    private static function loadFeatureCollection($src): array
     {
-        if (is_array($geojson)) return $geojson;
-        if (is_string($geojson)) {
-            if (is_file($geojson)) {
-                $s = file_get_contents($geojson);
-                $j = json_decode($s, true);
-                return is_array($j) ? $j : [];
-            }
-            // string JSON brut
-            $j = json_decode($geojson, true);
-            return is_array($j) ? $j : [];
-        }
-        return [];
-    }
-
-    private static function extractId(array $feature, array $idKeys): ?string
-    {
-        if (isset($feature['id'])) return (string)$feature['id'];
-        $props = $feature['properties'] ?? null;
-        if (is_array($props)) {
-            foreach ($idKeys as $k) {
-                if (array_key_exists($k, $props) && $props[$k] !== null && $props[$k] !== '') {
-                    return (string)$props[$k];
-                }
-            }
-        }
-        return null;
-    }
-
-    private static function featureCentroid(array $feature): ?array
-    {
-        if (!isset($feature['geometry'])) return null;
-        return self::geometryCentroid($feature['geometry']);
-    }
-
-    private static function geometryCentroid($geom): ?array
-    {
-        if (!$geom || !isset($geom['type'])) return null;
-        $t = $geom['type'];
-        $c = $geom['coordinates'] ?? null;
-
-        switch ($t) {
-            case 'Point':
-                if (!is_array($c) || count($c) < 2) return null;
-                return ['lat' => (float)$c[1], 'lng' => (float)$c[0]]; // GeoJSON: [lon,lat]
-
-            case 'MultiPoint':
-                return self::avgCoords($c);
-
-            case 'LineString':
-                return self::avgCoords($c);
-
-            case 'MultiLineString':
-                $acc = self::avgOfAverages($c);
-                return $acc;
-
-            case 'Polygon':
-                return self::polygonCentroid($c);
-
-            case 'MultiPolygon':
-                $sumX = 0.0; $sumY = 0.0; $sumA = 0.0;
-                if (!is_array($c)) return null;
-                foreach ($c as $polygon) {
-                    $cent = self::polygonCentroid($polygon);
-                    if ($cent && isset($cent['_A']) && $cent['_A'] != 0.0) {
-                        $sumX += $cent['_cx'] * $cent['_A'];
-                        $sumY += $cent['_cy'] * $cent['_A'];
-                        $sumA += $cent['_A'];
-                    }
-                }
-                if (abs($sumA) < 1e-12) return null;
-                return ['lat' => $sumY / $sumA, 'lng' => $sumX / $sumA];
-
-            case 'GeometryCollection':
-                $sumX = 0.0; $sumY = 0.0; $cnt = 0;
-                foreach (($geom['geometries'] ?? []) as $g) {
-                    $p = self::geometryCentroid($g);
-                    if ($p) { $sumX += $p['lng']; $sumY += $p['lat']; $cnt++; }
-                }
-                if ($cnt === 0) return null;
-                return ['lat' => $sumY / $cnt, 'lng' => $sumX / $cnt];
-
-            default:
-                return null;
-        }
-    }
-
-    private static function avgCoords($coords): ?array
-    {
-        if (!is_array($coords) || empty($coords)) return null;
-        $sx = 0.0; $sy = 0.0; $n = 0;
-        foreach ($coords as $pt) {
-            if (is_array($pt) && count($pt) >= 2) { $sx += $pt[0]; $sy += $pt[1]; $n++; }
-        }
-        if ($n === 0) return null;
-        return ['lat' => $sy / $n, 'lng' => $sx / $n];
-    }
-
-    private static function avgOfAverages($multi): ?array
-    {
-        if (!is_array($multi) || empty($multi)) return null;
-        $sx = 0.0; $sy = 0.0; $n = 0;
-        foreach ($multi as $coords) {
-            $p = self::avgCoords($coords);
-            if ($p) { $sx += $p['lng']; $sy += $p['lat']; $n++; }
-        }
-        if ($n === 0) return null;
-        return ['lat' => $sy / $n, 'lng' => $sx / $n];
-    }
-
-    /**
-     * Centroid plan (approx) d'un Polygon (liste de rings). Utilise toutes les rings avec aire signée.
-     * Retourne aussi _cx,_cy,_A (accumulateurs) pour pondérer les MultiPolygon.
-     */
-    private static function polygonCentroid($rings): ?array
-    {
-        if (!is_array($rings) || empty($rings)) return null;
-
-        $Cx = 0.0; $Cy = 0.0; $A = 0.0;
-        foreach ($rings as $ring) {
-            if (!is_array($ring) || count($ring) < 4) continue; // au moins 4 points (fermé)
-            $m = count($ring);
-            $area = 0.0; $cx = 0.0; $cy = 0.0;
-            for ($i = 0; $i < $m - 1; $i++) {
-                $x0 = (float)$ring[$i][0];   $y0 = (float)$ring[$i][1];
-                $x1 = (float)$ring[$i+1][0]; $y1 = (float)$ring[$i+1][1];
-                $cross = $x0 * $y1 - $x1 * $y0;
-                $area += $cross;
-                $cx += ($x0 + $x1) * $cross;
-                $cy += ($y0 + $y1) * $cross;
-            }
-            if (abs($area) < 1e-12) {
-                // fallback: moyenne simple
-                $p = self::avgCoords($ring);
-                if ($p) { $Cx += $p['lng']; $Cy += $p['lat']; $A += 1.0; }
-                continue;
-            }
-            $area *= 0.5;
-            $cx /= (6.0 * $area);
-            $cy /= (6.0 * $area);
-
-            $Cx += $cx * $area;
-            $Cy += $cy * $area;
-            $A  += $area;
-        }
-
-        if (abs($A) < 1e-12) return null;
-        $lng = $Cx / $A; $lat = $Cy / $A;
-        return ['lat' => $lat, 'lng' => $lng, '_cx' => $lng, '_cy' => $lat, '_A' => $A];
-    }
-
-    // ---------- Farthest-first + permutation ----------
-
-    private static function gcd(int $a, int $b): int {
-        $a = abs($a); $b = abs($b);
-        while ($b !== 0) { [$a, $b] = [$b, $a % $b]; }
-        return $a;
-    }
-
-    private static function spreadIndices(int $n, ?int $step = null): array
-    {
-        if ($n <= 1) return [0];
-        if ($step === null) {
-            $step = max(1, (int)round($n / 1.618)); // ~phi
+        if (is_array($src)) {
+            $fc = $src;
+        } elseif (is_string($src)) {
+            $json = is_file($src) ? file_get_contents($src) : $src;
+            $fc   = json_decode($json, true);
+            if (!is_array($fc)) throw new \RuntimeException('GeoJSON invalide');
         } else {
-            $step = (($step % $n) + $n) % $n;
-            if ($step === 0) $step = 1;
+            throw new \InvalidArgumentException('GeoJSON: type non supporté');
         }
-        while (self::gcd($step, $n) !== 1) {
-            $step = ($step + 1) % $n;
-            if ($step === 0) $step = 1;
+        if (($fc['type'] ?? null) !== 'FeatureCollection') {
+            throw new \InvalidArgumentException('Attendu FeatureCollection');
         }
-        $order = [];
-        for ($i = 0, $cur = 0; $i < $n; $i++, $cur = ($cur + $step) % $n) {
-            $order[] = $cur;
-        }
-        return $order;
+        return $fc;
     }
 
-    private static function dist($a, $b, string $metric): float
+    private static function extractItems(array $fc, array $idKeys): array
     {
+        $items = [];
+        foreach ($fc['features'] ?? [] as $f) {
+            $id = null;
+            if (isset($f['id'])) $id = (string)$f['id'];
+            if ($id === null && isset($f['properties']) && is_array($f['properties'])) {
+                foreach ($idKeys as $k) {
+                    if (array_key_exists($k, $f['properties'])) { $id = (string)$f['properties'][$k]; break; }
+                }
+            }
+            if ($id === null) continue;
+
+            $geom = $f['geometry'] ?? null;
+            if (!is_array($geom)) continue;
+            [$cx,$cy] = self::centroid($geom);
+            $bbox      = self::bbox($geom);
+
+            $items[] = ['id'=>$id, 'centroid'=>[$cx,$cy], 'bbox'=>$bbox];
+        }
+        return $items;
+    }
+
+    /* ---------------- Géométrie ---------------- */
+
+    private static function centroid(array $geom): array
+    {
+        $t = $geom['type'] ?? null;
+        $c = $geom['coordinates'] ?? null;
+        if ($t === 'Polygon') {
+            return self::polygonCentroid($c);
+        } elseif ($t === 'MultiPolygon') {
+            $sumA = 0.0; $sx = 0.0; $sy = 0.0;
+            foreach ($c as $poly) {
+                [$x,$y,$A] = self::polygonCentroidWithArea($poly);
+                if ($A !== 0.0) { $sumA += $A; $sx += $x*$A; $sy += $y*$A; }
+            }
+            if ($sumA !== 0.0) return [$sx/$sumA, $sy/$sumA];
+            $xs=0;$ys=0;$n=0; foreach ($c as $poly){[$x,$y]=self::polygonCentroid($poly);$xs+=$x;$ys+=$y;$n++;}
+            return [$xs/$n, $ys/$n];
+        } elseif ($t === 'Point') {
+            return [$c[0], $c[1]];
+        } else {
+            $b = self::bbox(['type'=>$t,'coordinates'=>$c]);
+            return [($b[0]+$b[2])/2, ($b[1]+$b[3])/2];
+        }
+    }
+
+    private static function polygonCentroid(array $polygon): array
+    {
+        [$x,$y,] = self::polygonCentroidWithArea($polygon);
+        return [$x,$y];
+    }
+
+    private static function polygonCentroidWithArea(array $polygon): array
+    {
+        $ring = $polygon[0] ?? [];
+        $A = 0.0; $cx = 0.0; $cy = 0.0;
+        $n = count($ring);
+        if ($n < 3) return [$ring[0][0] ?? 0.0, $ring[0][1] ?? 0.0, 0.0];
+        for ($i=0,$j=$n-1; $i<$n; $j=$i, $i++) {
+            $xi=$ring[$i][0]; $yi=$ring[$i][1];
+            $xj=$ring[$j][0]; $yj=$ring[$j][1];
+            $cross = $xj*$yi - $xi*$yj;
+            $A  += $cross;
+            $cx += ($xj + $xi) * $cross;
+            $cy += ($yj + $yi) * $cross;
+        }
+        $A *= 0.5;
+        if ($A == 0.0) return [$ring[0][0], $ring[0][1], 0.0];
+        $cx /= (6.0*$A);
+        $cy /= (6.0*$A);
+        return [$cx,$cy,$A];
+    }
+
+    private static function bbox(array $geom): array
+    {
+        $coords = $geom['coordinates'] ?? [];
+        $stack = [$coords];
+        $minx=INF;$miny=INF;$maxx=-INF;$maxy=-INF;
+        while ($stack) {
+            $v = array_pop($stack);
+            if (!is_array($v)) continue;
+            if (is_array($v) && isset($v[0]) && is_numeric($v[0]) && isset($v[1]) && is_numeric($v[1])) {
+                $x=$v[0]; $y=$v[1];
+                if ($x<$minx) $minx=$x; if ($x>$maxx) $maxx=$x;
+                if ($y<$miny) $miny=$y; if ($y>$maxy) $maxy=$y;
+            } else {
+                foreach ($v as $w) $stack[] = $w;
+            }
+        }
+        if ($minx===INF) return [0,0,0,0];
+        return [$minx,$miny,$maxx,$maxy];
+    }
+
+    /* ---------------- Distances & farthest-first (fallback) ---------------- */
+
+    private static function dist(array $aItem, array $bItem, string $metric): float
+    {
+        [$ax,$ay] = $aItem['centroid'];
+        [$bx,$by] = $bItem['centroid'];
         if ($metric === 'euclid') {
-            $dx = $a['lng'] - $b['lng'];
-            $dy = $a['lat'] - $b['lat'];
+            $dx = $ax - $bx; $dy = $ay - $by;
             return sqrt($dx*$dx + $dy*$dy);
         }
-        // haversine (km)
-        $R = 6371.0088;
-        $lat1 = deg2rad($a['lat']); $lat2 = deg2rad($b['lat']);
+        $R = 6371000.0;
+        $lat1 = deg2rad($ay); $lat2 = deg2rad($by);
         $dlat = $lat2 - $lat1;
-        $dlng = deg2rad($a['lng'] - $b['lng']);
-        $sinDLat = sin($dlat / 2);
-        $sinDLng = sin($dlng / 2);
-        $h = $sinDLat*$sinDLat + cos($lat1) * cos($lat2) * $sinDLng*$sinDLng;
-        return 2 * $R * asin(min(1.0, sqrt($h)));
+        $dlon = deg2rad($bx - $ax);
+        $s = sin($dlat/2)**2 + cos($lat1)*cos($lat2)*sin($dlon/2)**2;
+        return 2*$R*asin(min(1,sqrt($s)));
     }
 
-    private static function barycenter(array $items): array
-    {
-        $sx = 0.0; $sy = 0.0; $n = count($items);
-        foreach ($items as $it) { $sx += $it['lat']; $sy += $it['lng']; }
-        return ['lat' => $sx / $n, 'lng' => $sy / $n];
-    }
-
-    private static function farthestFirstOrder(array $items, string $metric, string $seedStrategy): array
+    private static function farthestFirstOrder(array $items, string $metric, string $seed): array
     {
         $n = count($items);
-        $selected = array_fill(0, $n, false);
-        $minDist  = array_fill(0, $n, INF);
-        $order    = [];
-
-        // seed
-        $seed = 0;
-        if ($seedStrategy === 'pair') {
-            $A = 0; $best = -1.0;
-            for ($i = 1; $i < $n; $i++) {
-                $d = self::dist($items[$i], $items[0], $metric);
-                if ($d > $best) { $best = $d; $A = $i; }
+        if ($seed === 'pair') {
+            $bestA = 0; $bestB = 1; $bestD = -1.0;
+            for ($i=0;$i<$n;$i++) for ($j=$i+1;$j<$n;$j++) {
+                $d = self::dist($items[$i], $items[$j], $metric);
+                if ($d > $bestD) { $bestD = $d; $bestA=$i; $bestB=$j; }
             }
-            $B = 0; $best = -1.0;
-            for ($i = 0; $i < $n; $i++) {
-                $d = self::dist($items[$i], $items[$A], $metric);
-                if ($d > $best) { $best = $d; $B = $i; }
-            }
-            $seed = $A; // ou $B
+            $order = [$bestA, $bestB];
         } else {
-            $bc = self::barycenter($items);
-            $seed = 0; $best = -1.0;
-            for ($i = 0; $i < $n; $i++) {
-                $d = self::dist($items[$i], $bc, $metric);
-                if ($d > $best) { $best = $d; $seed = $i; }
+            $sx=0.0;$sy=0.0;
+            foreach ($items as $it) { $sx += $it['centroid'][0]; $sy += $it['centroid'][1]; }
+            $cx=$sx/count($items); $cy=$sy/count($items);
+            $best=0; $bestD=-1.0;
+            foreach ($items as $i=>$it) {
+                $d = ($metric==='euclid')
+                    ? hypot($it['centroid'][0]-$cx, $it['centroid'][1]-$cy)
+                    : self::dist(['centroid'=>[$cx,$cy]], $it, $metric);
+                if ($d > $bestD) { $bestD = $d; $best = $i; }
+            }
+            $order = [$best];
+        }
+
+        $selected = array_fill(0, $n, false);
+        foreach ($order as $i) $selected[$i] = true;
+
+        $minDist = array_fill(0, $n, INF);
+        foreach ($order as $i) {
+            for ($j = 0; $j < $n; $j++) {
+                if ($selected[$j]) continue;
+                $d = self::dist($items[$i], $items[$j], $metric);
+                if ($d < $minDist[$j]) $minDist[$j] = $d;
             }
         }
 
-        // init
-        $selected[$seed] = true;
-        $order[] = $seed;
-        for ($i = 0; $i < $n; $i++) {
-            if (!$selected[$i]) $minDist[$i] = self::dist($items[$i], $items[$seed], $metric);
-        }
-
-        // boucle
-        for ($t = 1; $t < $n; $t++) {
+        while (count($order) < $n) {
             $next = -1; $best = -1.0;
             for ($i = 0; $i < $n; $i++) {
                 if ($selected[$i]) continue;
@@ -321,5 +250,162 @@ final class FeatureOrder
         }
 
         return $order;
+    }
+
+    private static function spreadIndices(int $n, ?int $step = null): array
+    {
+        if ($n <= 1) return [0];
+        if ($step === null) {
+            $phi  = (1 + sqrt(5)) / 2;
+            $step = max(1, (int)round($n / $phi));
+        }
+        $g = self::gcd($n, $step);
+        if ($g !== 1) {
+            for ($d = 1; $d < $n; $d++) {
+                if (self::gcd($n, $step+$d) === 1) { $step += $d; break; }
+                if ($step-$d > 0 && self::gcd($n, $step-$d) === 1) { $step -= $d; break; }
+            }
+        }
+        $i = 0; $perm = [];
+        for ($k=0;$k<$n;$k++) { $perm[] = $i; $i = ($i + $step) % $n; }
+        return $perm;
+    }
+    private static function gcd(int $a, int $b): int { return $b ? self::gcd($b, $a % $b) : abs($a); }
+
+    /* ---------------- Adjacence ---------------- */
+
+    private static function neighborsFromBBoxes(array $items, float $eps = 0.0): array
+    {
+        $n = count($items);
+        $adj = array_fill(0, $n, []);
+        for ($i=0;$i<$n;$i++) {
+            $ai = $items[$i]['bbox'];
+            for ($j=$i+1;$j<$n;$j++) {
+                $bj = $items[$j]['bbox'];
+                if (self::bboxOverlap($ai, $bj, $eps)) {
+                    $adj[$i][] = $j; $adj[$j][] = $i;
+                }
+            }
+        }
+        return $adj;
+    }
+
+    private static function bboxOverlap(array $a, array $b, float $eps = 0.0): bool
+    {
+        return !($a[2] < $b[0]-$eps || $b[2] < $a[0]-$eps ||
+                 $a[3] < $b[1]-$eps || $b[3] < $a[1]-$eps);
+    }
+
+    /* ---------------- DSATUR ---------------- */
+
+    private static function dsaturColoring(array $neighbors, int $paletteSize): array
+    {
+        $n = count($neighbors);
+        $color = array_fill(0, $n, -1);
+        $degree = array_map(fn($vs) => count(array_unique($vs)), $neighbors);
+        $uncolored = range(0, $n-1);
+
+        $ringDist = function (int $a, int $b) use ($paletteSize): int {
+            $d = abs($a - $b);
+            return min($d, $paletteSize - $d);
+        };
+
+        while (!empty($uncolored)) {
+            // choisir le sommet à saturation max (tie-break: degré)
+            $sat = [];
+            foreach ($uncolored as $v) {
+                $used = [];
+                foreach ($neighbors[$v] as $u) {
+                    $cu = $color[$u];
+                    if ($cu !== -1) $used[$cu] = true;
+                }
+                $sat[$v] = count($used);
+            }
+            $v = null;
+            foreach ($uncolored as $cand) {
+                if ($v === null) { $v = $cand; continue; }
+                if ($sat[$cand] > $sat[$v] ||
+                   ($sat[$cand] === $sat[$v] && $degree[$cand] > $degree[$v])) {
+                    $v = $cand;
+                }
+            }
+
+            // couleurs voisines
+            $neighborColors = [];
+            foreach ($neighbors[$v] as $u) {
+                $cu = $color[$u];
+                if ($cu !== -1) $neighborColors[$cu] = true;
+            }
+
+            // candidats
+            $candidates = [];
+            for ($c=0;$c<$paletteSize;$c++) if (!isset($neighborColors[$c])) $candidates[] = $c;
+
+            // choisir la couleur qui maximise la distance min aux voisines (anneau)
+            $bestC = 0; $bestScore = -1;
+            if (!empty($candidates)) {
+                foreach ($candidates as $c) {
+                    if (empty($neighborColors)) { $bestC = $c; $bestScore = INF; break; }
+                    $minD = PHP_INT_MAX;
+                    foreach (array_keys($neighborColors) as $nc) {
+                        $minD = min($minD, $ringDist($c, $nc));
+                    }
+                    if ($minD > $bestScore) { $bestScore = $minD; $bestC = $c; }
+                }
+            } else {
+                foreach (range(0, $paletteSize-1) as $c) {
+                    $minD = PHP_INT_MAX;
+                    foreach (array_keys($neighborColors) as $nc) {
+                        $minD = min($minD, $ringDist($c, $nc));
+                    }
+                    if ($minD > $bestScore) { $bestScore = $minD; $bestC = $c; }
+                }
+            }
+
+            $color[$v] = $bestC;
+            $uncolored = array_values(array_diff($uncolored, [$v]));
+        }
+        return $color; // index feature -> index couleur [0..paletteSize-1]
+    }
+
+    /**
+     * Place les features pour que (position % paletteSize) == colorIndex[feature].
+     * Round-robin 0..N-1, 0..N-1 en prenant 1 élément de chaque classe si dispo.
+     */
+    private static function roundRobinByColor(array $colorIndex, array $items): array
+    {
+        $n = count($items);
+        $N = max(1, ...array_map(fn($c)=>$c+1, $colorIndex));
+        $buckets = array_fill(0, $N, []);
+        foreach ($items as $i=>$it) {
+            $c = $colorIndex[$i];
+            if (!isset($buckets[$c])) $buckets[$c] = [];
+            $buckets[$c][] = $it;
+        }
+
+        // petit tri interne pour des répétitions plus jolies au sein d'une même couleur
+        foreach ($buckets as $c => $bucket) {
+            if (count($bucket) <= 2) continue;
+            usort($bucket, function($a,$b){
+                [$ax,$ay] = $a['centroid']; [$bx,$by] = $b['centroid'];
+                if ($ax === $bx) return $ay <=> $by;
+                return $ax <=> $bx;
+            });
+            $buckets[$c] = $bucket;
+        }
+
+        $out = [];
+        $exhausted = false; $k = 0;
+        while (!$exhausted) {
+            $exhausted = true;
+            for ($c=0; $c<$N; $c++) {
+                if (!empty($buckets[$c])) {
+                    $out[] = array_shift($buckets[$c]);
+                    $exhausted = false;
+                }
+            }
+            $k++; if ($k > $n + $N) break; // sécurité
+        }
+        return $out;
     }
 }
