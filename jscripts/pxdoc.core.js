@@ -71,6 +71,34 @@ self.sleep = ms => {
 
 
 /******************************************************
+ *               Dynamic Script Loading               *
+ ******************************************************/
+self.loadScript = async function(endpoint, params = {}, isAsync = false) {
+    const url = new URL(endpoint);
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    const script = document.createElement('script');
+    script.src = url.toString();
+    script.async = isAsync;
+    document.head.appendChild(script);
+};
+
+
+/******************************************************
+ *           Load Json properties for target          *
+ ******************************************************/
+self.loadJsonProperties = async function(target, files = []) {
+    const requests = files.map(async url => {
+        const response = await fetch(url);
+        return { url, id: url.match(/([^\/]+)(?=\.\w+$)/)[0], status: response.status, ok: response.ok, data: await response.json()};
+    });
+    for await (const {url, id, status, ok, data} of requests) {
+        if(!ok) console.error(`${id} [${status} - ${ok ? "OK" : "ERREUR"}] ${url}`);
+        target[id] = data;
+    }
+};
+
+
+/******************************************************
  *                    Get datetime                    *
  ******************************************************/
 const now = () => {
