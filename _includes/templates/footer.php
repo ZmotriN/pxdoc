@@ -1,3 +1,3 @@
-        <script>app.mount('body');</script>
+        <script>window.$app = app.mount('body');</script>
     </body>
 </html>

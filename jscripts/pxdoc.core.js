@@ -1768,4 +1768,3 @@ app.component('timg', {
     template: `<div class="error"><div class="error__text"><h4>{{ title }}</h4><slot/></div></div>`
 });
 
-window.app = app;
