@@ -86,15 +86,29 @@ self.loadScript = async function(endpoint, params = {}, isAsync = false) {
 /******************************************************
  *           Load Json properties for target          *
  ******************************************************/
-self.loadJsonProperties = async function(target, files = []) {
-    const requests = files.map(async url => {
-        const response = await fetch(url);
-        return { url, id: url.match(/([^\/]+)(?=\.\w+$)/)[0], status: response.status, ok: response.ok, data: await response.json()};
-    });
-    for await (const {url, id, status, ok, data} of requests) {
-        if(!ok) console.error(`${id} [${status} - ${ok ? "OK" : "ERREUR"}] ${url}`);
-        target[id] = data;
+self.loadJsonProperties = async function (target, files = []) {
+    const results = await Promise.allSettled(
+        files.map(async (url) => {
+            const res = await fetch(url);
+            const id = url.match(/([^\/]+)(?=\.\w+$)/)?.[0] ?? url;
+            let data = null;
+            try { data = await res.json(); } catch (_) { }
+            return { url, id, status: res.status, ok: res.ok, data };
+        })
+    );
+    for (const r of results) {
+        if (r.status === 'fulfilled') {
+            const { url, id, status, ok, data } = r.value;
+            if (!ok) {
+                console.error(`${id} [${status} - ERREUR] ${url}`);
+                continue;
+            }
+            target[id] = data;
+        } else {
+            console.error('Erreur réseau/JS pendant le chargement :', r.reason);
+        }
     }
+    return target;
 };
 
 
