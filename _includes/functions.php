@@ -129,9 +129,10 @@ function print_children($parent=null, $return=false) {
     foreach(get_children($parent) as $child) {
         $abstract = empty($child->abstract) ? '' : $child->abstract;
         $icon = $child->href . $child->icon;
+        $radius = pathinfo($icon, PATHINFO_EXTENSION) == 'svg' ? '0' : '50%';
         $str .= <<<EOD
                         <div class="list-grid__item">
-                            <div class="list-grid__item__icon" style="background-image: url({$icon});"></div>
+                            <div class="list-grid__item__icon" style="background-image: url({$icon}); border-radius: {$radius};"></div>
                             <div class="list-grid__item__description">
                                 <span class="list-grid__item__title"><a href="{$child->href}">{$child->title}</a></span>
                                 <span class="list-grid__item__abstract">{$abstract}</span>
