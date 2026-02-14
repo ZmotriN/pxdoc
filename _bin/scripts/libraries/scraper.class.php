@@ -7,12 +7,12 @@
 
 class Scraper
 {
-
+    private $cache;
     private $url;
     private $contents;
     private $xpath;
 
-    public function __construct($url) {
+    public function __construct($url, $cache = false) {
         $this->url = $url;
         if(!is_url($this->url)) throw new Exception("URL is not valid.");
         if(!$this->contents = self::getContents($this->url)) throw new Exception("URL crawling seems to have been block.");
